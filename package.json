@@ -1,0 +1,14 @@
+{
+  "name": "sass-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "migrate": "npm --prefix backend run migrate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

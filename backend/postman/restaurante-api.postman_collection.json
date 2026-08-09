@@ -1,0 +1,557 @@
+{
+  "info": {
+    "_postman_id": "4db9cb87-7e89-4a25-9773-e8e2bd8f6c35",
+    "name": "Restaurante Praia API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "produtoId",
+      "value": "1"
+    },
+    {
+      "key": "comandaId",
+      "value": "1"
+    },
+    {
+      "key": "pedidoId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@empresa.com\",\n  \"senha\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Produtos",
+      "item": [
+        {
+          "name": "Listar produtos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "produtos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Peixe frito\",\n  \"descricao\": \"Porcao para 2 pessoas\",\n  \"preco\": 89.9,\n  \"custo\": 43.5,\n  \"unidade\": \"UN\",\n  \"codigo\": \"PF-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "produtos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('produtoId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar produto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar produto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Peixe frito especial\",\n  \"descricao\": \"Com baiao e salada\",\n  \"preco\": 99.9,\n  \"custo\": 48.0,\n  \"unidade\": \"UN\",\n  \"codigo\": \"PF-001\",\n  \"disponivel\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar produto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comandas",
+      "item": [
+        {
+          "name": "Listar comandas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/comandas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "comandas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar comanda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero_comanda\": \"C-1001\",\n  \"mesa_ref\": \"Q12\",\n  \"observacoes\": \"Area externa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/comandas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "comandas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('comandaId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar comanda",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/comandas/{{comandaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "comandas",
+                "{{comandaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fechar comanda",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"fechada\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/comandas/{{comandaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "comandas",
+                "{{comandaId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/pedidos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "pedidos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comanda_id\": {{comandaId}},\n  \"mesa_ref\": \"Q12\",\n  \"desconto_valor\": 5,\n  \"taxa_servico_pct\": 10,\n  \"itens\": [\n    {\n      \"produto_id\": {{produtoId}},\n      \"quantidade\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/pedidos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "pedidos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('pedidoId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar pedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/pedidos/{{pedidoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "pedidos",
+                "{{pedidoId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar status pedido",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"entregue\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/pedidos/{{pedidoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "pedidos",
+                "{{pedidoId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Relatorios",
+      "item": [
+        {
+          "name": "Faturamento diario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/relatorios/faturamento-diario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "relatorios",
+                "faturamento-diario"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Produtos mais vendidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/relatorios/produtos-mais-vendidos?limite=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "relatorios",
+                "produtos-mais-vendidos"
+              ],
+              "query": [
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ticket medio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/restaurante/relatorios/ticket-medio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "restaurante",
+                "relatorios",
+                "ticket-medio"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
