@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -67,21 +67,35 @@ function buildAuditSummary(venda) {
 }
 
 export default function Vendas() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [vendas, setVendas] = useState([]);
-  const [status, setStatus] = useState('');
-  const [somenteInconsistencias, setSomenteInconsistencias] = useState(false);
+  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [dataInicio, setDataInicio] = useState(searchParams.get('data_inicio') || '');
+  const [dataFim, setDataFim] = useState(searchParams.get('data_fim') || '');
+  const [somenteInconsistencias, setSomenteInconsistencias] = useState(searchParams.get('somente_inconsistencias') === 'true');
   const [detalheVenda, setDetalheVenda] = useState(null);
   const [loadingDetalhe, setLoadingDetalhe] = useState(false);
 
   function load() {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim) params.set('data_fim', dataFim);
     if (somenteInconsistencias) params.set('somente_inconsistencias', 'true');
     const query = params.toString();
     api.get(`/vendas${query ? `?${query}` : ''}`).then((r) => setVendas(r.data));
   }
 
-  useEffect(() => { load(); }, [status, somenteInconsistencias]);
+  useEffect(() => { load(); }, [status, dataInicio, dataFim, somenteInconsistencias]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim) params.set('data_fim', dataFim);
+    if (somenteInconsistencias) params.set('somente_inconsistencias', 'true');
+    setSearchParams(params, { replace: true });
+  }, [status, dataInicio, dataFim, somenteInconsistencias, setSearchParams]);
 
   async function fecharVenda(id) {
     try {
@@ -124,7 +138,15 @@ export default function Vendas() {
       </div>
 
       <div className="card">
-        <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-end gap-3 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Data inicial</label>
+            <input className="input w-40" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Data final</label>
+            <input className="input w-40" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          </div>
           {['', 'aberta', 'fechada', 'cancelada'].map((s) => (
             <button key={s} onClick={() => setStatus(s)}
               className={`btn btn-sm ${status === s ? 'btn-primary' : 'btn-secondary'}`}>
@@ -137,6 +159,13 @@ export default function Vendas() {
             className={`btn btn-sm ${somenteInconsistencias ? 'btn-danger' : 'btn-secondary'}`}
           >
             {somenteInconsistencias ? 'Mostrando inconsistências' : 'Somente com inconsistência'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatus(''); setDataInicio(''); setDataFim(''); setSomenteInconsistencias(false); }}
+            className="btn btn-sm btn-secondary"
+          >
+            Limpar filtros
           </button>
         </div>
         <div className="overflow-x-auto">

@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { formatCurrency } from '../utils/format';
 import { demoCategorias, demoProdutos } from '../utils/demoData';
 
-const EMPTY = { nome: '', descricao: '', preco: '', custo: '', unidade: 'UN', categoria_id: '', codigo: '' };
+const EMPTY = { nome: '', descricao: '', preco: '', custo: '', unidade: 'UN', categoria_id: '', codigo: '', estoque_atual: '', quantidade_minima: '' };
+
+function classifyStock(quantidade, minimo) {
+  if (quantidade <= 0) return 'baixo';
+  if (quantidade <= minimo) return 'atencao';
+  return 'normal';
+}
 
 export default function Produtos() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [search, setSearch] = useState('');
-  const [filtroAtivo, setFiltroAtivo] = useState('true');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [filtroAtivo, setFiltroAtivo] = useState(searchParams.get('ativo') || 'true');
   const [modal, setModal] = useState(false);
   const [showCategoriaInline, setShowCategoriaInline] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -19,6 +27,11 @@ export default function Produtos() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [categoriaLoading, setCategoriaLoading] = useState(false);
+  const [quickModal, setQuickModal] = useState(false);
+  const [quickProduto, setQuickProduto] = useState(null);
+  const [quickTipo, setQuickTipo] = useState('estoque');
+  const [quickValor, setQuickValor] = useState('');
+  const [quickLoading, setQuickLoading] = useState(false);
 
   function load() {
     api.get(`/produtos?search=${encodeURIComponent(search)}&ativo=${filtroAtivo}`)
@@ -42,11 +55,47 @@ export default function Produtos() {
   }, []);
   useEffect(() => { load(); }, [search, filtroAtivo]);
 
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (filtroAtivo && filtroAtivo !== 'true') params.set('ativo', filtroAtivo);
+    setSearchParams(params, { replace: true });
+  }, [search, filtroAtivo, setSearchParams]);
+
+  useEffect(() => {
+    function handleFocus() {
+      load();
+    }
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [search, filtroAtivo]);
+
   function openNovo() { setForm(EMPTY); setEditId(null); setModal(true); }
-  function openEditar(p) { setForm(p); setEditId(p.id); setModal(true); }
+  function openEditar(p) {
+    setForm({
+      ...p,
+      estoque_atual: p.estoque_atual ?? '',
+      quantidade_minima: p.quantidade_minima ?? '',
+    });
+    setEditId(p.id);
+    setModal(true);
+  }
   function openNovaCategoria() {
     setCategoriaForm({ nome: '', descricao: '' });
     setShowCategoriaInline((current) => !current);
+  }
+
+  function openAjusteRapido(produto, tipo) {
+    setQuickProduto(produto);
+    setQuickTipo(tipo);
+    setQuickValor(tipo === 'estoque' ? String(produto.estoque_atual ?? 0) : String(produto.quantidade_minima ?? 0));
+    setQuickModal(true);
   }
 
   async function handleSalvar(e) {
@@ -56,6 +105,8 @@ export default function Produtos() {
       const payload = {
         ...form,
         categoria_id: form.categoria_id || null,
+        estoque_atual: form.estoque_atual === '' ? 0 : Number(form.estoque_atual),
+        quantidade_minima: form.quantidade_minima === '' ? 0 : Number(form.quantidade_minima),
       };
 
       if (editId) {
@@ -66,7 +117,7 @@ export default function Produtos() {
         toast.success('Produto cadastrado!');
       }
       setModal(false);
-      load();
+      await load();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erro ao salvar');
     } finally {
@@ -91,6 +142,30 @@ export default function Produtos() {
     }
   }
 
+  async function handleSalvarAjusteRapido(e) {
+    e.preventDefault();
+    if (!quickProduto) return;
+
+    setQuickLoading(true);
+    try {
+      const payload = {
+        ...quickProduto,
+        estoque_atual: quickTipo === 'estoque' ? Number(quickValor) : Number(quickProduto.estoque_atual ?? 0),
+        quantidade_minima: quickTipo === 'minimo' ? Number(quickValor) : Number(quickProduto.quantidade_minima ?? 0),
+      };
+
+      await api.put(`/produtos/${quickProduto.id}`, payload);
+      toast.success(quickTipo === 'estoque' ? 'Estoque ajustado!' : 'Mínimo ajustado!');
+      setQuickModal(false);
+      setQuickProduto(null);
+      await load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao atualizar produto');
+    } finally {
+      setQuickLoading(false);
+    }
+  }
+
   async function handleAlterarStatus(produto) {
     const reativar = produto.ativo === false;
 
@@ -104,7 +179,7 @@ export default function Produtos() {
       toast.success('Produto desativado');
     }
 
-    load();
+    await load();
   }
 
   const f = (field) => ({ value: form[field] || '', onChange: (e) => setForm((p) => ({ ...p, [field]: e.target.value })) });
@@ -151,13 +226,16 @@ export default function Produtos() {
                   <td className="table-cell text-green-600 font-medium">{formatCurrency(p.preco)}</td>
                   <td className="table-cell text-gray-500">{formatCurrency(p.custo)}</td>
                   <td className="table-cell">
-                    <span className={`badge ${parseFloat(p.estoque_atual) <= 0 ? 'badge-red' : 'badge-green'}`}>
+                    <span className={`badge ${classifyStock(Number(p.estoque_atual || 0), Number(p.quantidade_minima || 0)) === 'baixo' ? 'badge-red' : classifyStock(Number(p.estoque_atual || 0), Number(p.quantidade_minima || 0)) === 'atencao' ? 'badge-yellow' : 'badge-green'}`}>
                       {p.estoque_atual} {p.unidade}
                     </span>
+                    <div className="mt-1 text-xs text-gray-400">Mínimo: {p.quantidade_minima ?? 0}</div>
                   </td>
                   <td className="table-cell">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button onClick={() => openEditar(p)} className="btn-secondary btn-sm">Editar</button>
+                      <button onClick={() => openAjusteRapido(p, 'estoque')} className="btn-secondary btn-sm">Estoque</button>
+                      <button onClick={() => openAjusteRapido(p, 'minimo')} className="btn-secondary btn-sm">Mínimo</button>
                       <button onClick={() => handleAlterarStatus(p)} className={p.ativo === false ? 'btn-primary btn-sm' : 'btn-danger btn-sm'}>
                         {p.ativo === false ? 'Reativar' : 'Desativar'}
                       </button>
@@ -196,6 +274,14 @@ export default function Produtos() {
               <div>
                 <label className="label">Custo</label>
                 <input className="input" type="number" step="0.01" min="0" {...f('custo')} />
+              </div>
+              <div>
+                <label className="label">Estoque atual</label>
+                <input className="input" type="number" step="0.01" min="0" {...f('estoque_atual')} />
+              </div>
+              <div>
+                <label className="label">Estoque mínimo</label>
+                <input className="input" type="number" step="0.01" min="0" {...f('quantidade_minima')} />
               </div>
               <div className="col-span-2">
                 <div className="flex items-center justify-between gap-3 mb-1">
@@ -237,6 +323,39 @@ export default function Produtos() {
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setModal(false)} className="btn-secondary">Cancelar</button>
               <button type="submit" disabled={loading} className="btn-primary">{loading ? 'Salvando...' : 'Salvar'}</button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {quickModal && quickProduto && (
+        <Modal
+          title={quickTipo === 'estoque' ? `Ajustar estoque - ${quickProduto.nome}` : `Ajustar mínimo - ${quickProduto.nome}`}
+          onClose={() => setQuickModal(false)}
+          size="sm"
+        >
+          <form onSubmit={handleSalvarAjusteRapido} className="space-y-4">
+            <div>
+              <label className="label">{quickTipo === 'estoque' ? 'Novo estoque' : 'Novo mínimo'}</label>
+              <input
+                className="input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={quickValor}
+                onChange={(e) => setQuickValor(e.target.value)}
+                required
+              />
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600 space-y-1">
+              <div>Estoque atual: {quickProduto.estoque_atual ?? 0}</div>
+              <div>Mínimo atual: {quickProduto.quantidade_minima ?? 0}</div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setQuickModal(false)} className="btn-secondary">Cancelar</button>
+              <button type="submit" disabled={quickLoading} className="btn-primary">
+                {quickLoading ? 'Salvando...' : 'Salvar'}
+              </button>
             </div>
           </form>
         </Modal>

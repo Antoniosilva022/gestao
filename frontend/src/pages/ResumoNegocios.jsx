@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { formatCurrency } from '../utils/format';
 
@@ -18,12 +19,34 @@ function escapeCsv(value) {
 }
 
 export default function ResumoNegocios() {
-  const [dataInicio, setDataInicio] = useState(monthStartIso);
-  const [dataFim, setDataFim] = useState(todayIso);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [dataInicio, setDataInicio] = useState(searchParams.get('data_inicio') || monthStartIso());
+  const [dataFim, setDataFim] = useState(searchParams.get('data_fim') || todayIso());
   const [resumo, setResumo] = useState({ total_vendas: 0, faturamento_total: 0, ticket_medio: 0 });
   const [porProduto, setPorProduto] = useState([]);
   const [porPagamento, setPorPagamento] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const insights = useMemo(() => {
+    const totalVendas = Number(resumo.total_vendas || 0);
+    const faturamentoTotal = Number(resumo.faturamento_total || 0);
+    const principalProduto = porProduto[0] || null;
+    const principalPagamento = porPagamento[0] || null;
+
+    return {
+      totalVendas,
+      faturamentoTotal,
+      principalProduto,
+      principalPagamento,
+      ticketMedio: Number(resumo.ticket_medio || 0),
+      produtoParticipacao: principalProduto && faturamentoTotal > 0
+        ? (Number(principalProduto.faturamento || 0) / faturamentoTotal) * 100
+        : 0,
+      pagamentoParticipacao: principalPagamento && faturamentoTotal > 0
+        ? (Number(principalPagamento.faturamento || 0) / faturamentoTotal) * 100
+        : 0,
+    };
+  }, [porPagamento, porProduto, resumo.faturamento_total, resumo.ticket_medio, resumo.total_vendas]);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -149,6 +172,13 @@ export default function ResumoNegocios() {
     load();
   }, [query]);
 
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim) params.set('data_fim', dataFim);
+    setSearchParams(params, { replace: true });
+  }, [dataInicio, dataFim, setSearchParams]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -196,6 +226,40 @@ export default function ResumoNegocios() {
         <div className="card">
           <p className="text-sm text-gray-500">Ticket médio</p>
           <p className="mt-2 text-2xl font-semibold text-amber-600">{formatCurrency(resumo.ticket_medio)}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card border border-blue-100 bg-blue-50">
+          <p className="text-xs font-medium text-blue-600">Produto líder</p>
+          <p className="mt-2 text-lg font-semibold text-gray-800">
+            {insights.principalProduto ? insights.principalProduto.nome : 'Sem dados'}
+          </p>
+          <p className="mt-1 text-sm text-gray-600">
+            {insights.principalProduto
+              ? `${formatCurrency(insights.principalProduto.faturamento)} | ${insights.produtoParticipacao.toFixed(1)}% do faturamento`
+              : 'Nenhuma venda registrada no período'}
+          </p>
+        </div>
+        <div className="card border border-emerald-100 bg-emerald-50">
+          <p className="text-xs font-medium text-emerald-600">Forma líder</p>
+          <p className="mt-2 text-lg font-semibold text-gray-800">
+            {insights.principalPagamento ? insights.principalPagamento.forma_pagamento : 'Sem dados'}
+          </p>
+          <p className="mt-1 text-sm text-gray-600">
+            {insights.principalPagamento
+              ? `${formatCurrency(insights.principalPagamento.faturamento)} | ${insights.pagamentoParticipacao.toFixed(1)}% do faturamento`
+              : 'Nenhum faturamento no período'}
+          </p>
+        </div>
+        <div className="card border border-amber-100 bg-amber-50">
+          <p className="text-xs font-medium text-amber-600">Leitura rápida</p>
+          <p className="mt-2 text-lg font-semibold text-gray-800">
+            {insights.totalVendas} vendas analisadas
+          </p>
+          <p className="mt-1 text-sm text-gray-600">
+            Ticket médio de {formatCurrency(insights.ticketMedio)} no período selecionado
+          </p>
         </div>
       </div>
 

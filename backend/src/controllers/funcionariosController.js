@@ -3,10 +3,14 @@ const { pool } = require('../config/database');
 async function listar(req, res) {
   try {
     const empresaId = req.empresaId;
-    const { search = '', status } = req.query;
+    const { search = '', status, salario_min, salario_max, admissao_inicio, admissao_fim } = req.query;
     let query = `SELECT * FROM funcionarios WHERE empresa_id = $1 AND (nome ILIKE $2 OR cargo ILIKE $2 OR departamento ILIKE $2)`;
     const params = [empresaId, `%${search}%`];
     if (status) { params.push(status); query += ` AND status = $${params.length}`; }
+    if (salario_min) { params.push(salario_min); query += ` AND COALESCE(salario, 0) >= $${params.length}`; }
+    if (salario_max) { params.push(salario_max); query += ` AND COALESCE(salario, 0) <= $${params.length}`; }
+    if (admissao_inicio) { params.push(admissao_inicio); query += ` AND data_admissao >= $${params.length}`; }
+    if (admissao_fim) { params.push(admissao_fim); query += ` AND data_admissao <= $${params.length}`; }
     query += ' ORDER BY nome';
     const { rows } = await pool.query(query, params);
     res.json(rows);

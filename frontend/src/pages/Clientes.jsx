@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -7,9 +8,10 @@ import { demoClientes } from '../utils/demoData';
 const EMPTY = { nome: '', email: '', telefone: '', cpf_cnpj: '', endereco: '', cidade: '', estado: '', cep: '' };
 
 export default function Clientes() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [clientes, setClientes] = useState([]);
-  const [search, setSearch] = useState('');
-  const [filtroAtivo, setFiltroAtivo] = useState('true');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [filtroAtivo, setFiltroAtivo] = useState(searchParams.get('ativo') || 'true');
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState(null);
@@ -26,6 +28,13 @@ export default function Clientes() {
   }
 
   useEffect(() => { load(); }, [search, filtroAtivo]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (filtroAtivo && filtroAtivo !== 'true') params.set('ativo', filtroAtivo);
+    setSearchParams(params, { replace: true });
+  }, [search, filtroAtivo, setSearchParams]);
 
   function openNovo() { setForm(EMPTY); setEditId(null); setModal(true); }
   function openEditar(c) { setForm(c); setEditId(c.id); setModal(true); }

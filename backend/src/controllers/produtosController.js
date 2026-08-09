@@ -4,12 +4,19 @@ function normalizeCategoriaId(categoriaId) {
   return categoriaId === '' || categoriaId === undefined ? null : categoriaId;
 }
 
+function normalizeEstoqueValue(value) {
+  if (value === '' || value === undefined || value === null) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
 async function listar(req, res) {
   try {
     const empresaId = req.empresaId;
     const { search = '', ativo = 'true' } = req.query;
     const { rows } = await pool.query(
       `SELECT p.*, c.nome as categoria_nome, COALESCE(e.quantidade, 0) as estoque_atual
+             , COALESCE(e.quantidade_minima, 0) as quantidade_minima
        FROM produtos p
        LEFT JOIN categorias c ON c.id = p.categoria_id AND c.empresa_id = p.empresa_id
        LEFT JOIN estoque e ON e.produto_id = p.id AND e.empresa_id = p.empresa_id
@@ -28,6 +35,7 @@ async function buscar(req, res) {
     const empresaId = req.empresaId;
     const { rows } = await pool.query(
       `SELECT p.*, c.nome as categoria_nome, COALESCE(e.quantidade, 0) as estoque_atual
+             , COALESCE(e.quantidade_minima, 0) as quantidade_minima
        FROM produtos p
        LEFT JOIN categorias c ON c.id = p.categoria_id AND c.empresa_id = p.empresa_id
        LEFT JOIN estoque e ON e.produto_id = p.id AND e.empresa_id = p.empresa_id
@@ -43,8 +51,10 @@ async function buscar(req, res) {
 
 async function criar(req, res) {
   const empresaId = req.empresaId;
-  const { nome, descricao, preco, custo, unidade, categoria_id, codigo } = req.body;
+  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, estoque_atual, quantidade_minima } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
+  const estoqueInicial = normalizeEstoqueValue(estoque_atual);
+  const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -53,7 +63,10 @@ async function criar(req, res) {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
       [empresaId, nome, descricao, preco, custo, unidade, categoriaId, codigo]
     );
-    await client.query('INSERT INTO estoque (empresa_id, produto_id, quantidade) VALUES ($1, $2, 0)', [empresaId, rows[0].id]);
+    await client.query(
+      'INSERT INTO estoque (empresa_id, produto_id, quantidade, quantidade_minima) VALUES ($1, $2, $3, $4)',
+      [empresaId, rows[0].id, estoqueInicial, estoqueMinimo]
+    );
     await client.query('COMMIT');
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -66,18 +79,35 @@ async function criar(req, res) {
 
 async function atualizar(req, res) {
   const empresaId = req.empresaId;
-  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, ativo } = req.body;
+  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, ativo, estoque_atual, quantidade_minima } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
+  const estoqueAtual = normalizeEstoqueValue(estoque_atual);
+  const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    const { rows } = await client.query(
       `UPDATE produtos SET nome=$1, descricao=$2, preco=$3, custo=$4, unidade=$5, categoria_id=$6, codigo=$7, ativo=$8
        WHERE id=$9 AND empresa_id = $10 RETURNING *`,
       [nome, descricao, preco, custo, unidade, categoriaId, codigo, ativo, req.params.id, empresaId]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Produto não encontrado' });
+    if (!rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
+    await client.query(
+      `UPDATE estoque
+       SET quantidade = $1, quantidade_minima = $2, atualizado_em = NOW()
+       WHERE produto_id = $3 AND empresa_id = $4`,
+      [estoqueAtual, estoqueMinimo, req.params.id, empresaId]
+    );
+    await client.query('COMMIT');
     res.json(rows[0]);
   } catch (err) {
+    await client.query('ROLLBACK');
     res.status(400).json({ error: err.message });
+  } finally {
+    client.release();
   }
 }
 

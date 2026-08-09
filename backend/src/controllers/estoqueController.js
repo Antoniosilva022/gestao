@@ -62,7 +62,7 @@ async function movimentar(req, res) {
 async function historico(req, res) {
   try {
     const empresaId = req.empresaId;
-    const { produto_id } = req.query;
+    const { produto_id, tipo, data_inicio, data_fim } = req.query;
     let query = `SELECT m.*, p.nome as produto_nome, u.nome as usuario_nome
                  FROM movimentacoes_estoque m
                  JOIN produtos p ON p.id = m.produto_id
@@ -70,6 +70,9 @@ async function historico(req, res) {
                  WHERE m.empresa_id = $1 AND p.empresa_id = $1`;
     const params = [empresaId];
     if (produto_id) { params.push(produto_id); query += ` AND m.produto_id = $${params.length}`; }
+    if (tipo) { params.push(tipo); query += ` AND m.tipo = $${params.length}`; }
+    if (data_inicio) { params.push(data_inicio); query += ` AND DATE(m.criado_em) >= $${params.length}`; }
+    if (data_fim) { params.push(data_fim); query += ` AND DATE(m.criado_em) <= $${params.length}`; }
     query += ' ORDER BY m.criado_em DESC LIMIT 100';
     const { rows } = await pool.query(query, params);
     res.json(rows);

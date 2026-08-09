@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -8,23 +9,48 @@ const EMPTY = { tipo: 'pagar', descricao: '', valor: '', vencimento: '', categor
 const STATUS_BADGE = { pendente: 'badge-yellow', pago: 'badge-green', cancelado: 'badge-gray', vencido: 'badge-red' };
 
 export default function Financeiro() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [contas, setContas] = useState([]);
   const [resumo, setResumo] = useState(null);
-  const [tipo, setTipo] = useState('');
-  const [status, setStatus] = useState('');
+  const [tipo, setTipo] = useState(searchParams.get('tipo') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [dataInicio, setDataInicio] = useState(searchParams.get('data_inicio') || '');
+  const [dataFim, setDataFim] = useState(searchParams.get('data_fim') || '');
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   function load() {
     const params = new URLSearchParams();
     if (tipo) params.append('tipo', tipo);
     if (status) params.append('status', status);
+    if (dataInicio) params.append('data_inicio', dataInicio);
+    if (dataFim) params.append('data_fim', dataFim);
     api.get(`/financeiro?${params}`).then((r) => setContas(r.data));
     api.get('/financeiro/resumo').then((r) => setResumo(r.data));
   }
 
-  useEffect(() => { load(); }, [tipo, status]);
+  useEffect(() => { load(); }, [tipo, status, dataInicio, dataFim]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tipo) params.set('tipo', tipo);
+    if (status) params.set('status', status);
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim) params.set('data_fim', dataFim);
+    setSearchParams(params, { replace: true });
+  }, [tipo, status, dataInicio, dataFim, setSearchParams]);
+
+  const resumoLista = useMemo(() => {
+    return contas.reduce((acc, conta) => {
+      acc.total += 1;
+      if (conta.status === 'pendente') acc.pendentes += 1;
+      if (conta.status === 'vencido') acc.vencidas += 1;
+      if (conta.status === 'cancelado') acc.canceladas += 1;
+      return acc;
+    }, { total: 0, pendentes: 0, vencidas: 0, canceladas: 0 });
+  }, [contas]);
 
   async function handleSalvar(e) {
     e.preventDefault();
@@ -42,9 +68,30 @@ export default function Financeiro() {
   }
 
   async function pagar(id) {
-    await api.patch(`/financeiro/${id}/pagar`);
-    toast.success('Pagamento registrado!');
-    load();
+    setActionLoadingId(id);
+    try {
+      await api.patch(`/financeiro/${id}/pagar`);
+      toast.success('Pagamento registrado!');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao registrar pagamento');
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  async function cancelar(id) {
+    if (!confirm('Cancelar esta conta?')) return;
+    setActionLoadingId(id);
+    try {
+      await api.patch(`/financeiro/${id}/cancelar`);
+      toast.success('Conta cancelada!');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao cancelar conta');
+    } finally {
+      setActionLoadingId(null);
+    }
   }
 
   const f = (field) => ({ value: form[field] || '', onChange: (e) => setForm((p) => ({ ...p, [field]: e.target.value })) });
@@ -78,7 +125,15 @@ export default function Financeiro() {
       )}
 
       <div className="card">
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4 items-end">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Data inicial</label>
+            <input className="input w-40" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Data final</label>
+            <input className="input w-40" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          </div>
           <div className="flex gap-2">
             {['', 'pagar', 'receber'].map((t) => (
               <button key={t} onClick={() => setTipo(t)} className={`btn btn-sm ${tipo === t ? 'btn-primary' : 'btn-secondary'}`}>
@@ -92,6 +147,31 @@ export default function Financeiro() {
                 {s || 'Todos'}
               </button>
             ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => { setTipo(''); setStatus(''); setDataInicio(''); setDataFim(''); }}
+            className="btn-secondary btn-sm"
+          >
+            Limpar filtros
+          </button>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+            <p className="text-xs font-medium text-gray-500">Contas exibidas</p>
+            <p className="mt-1 text-lg font-bold text-gray-800">{resumoLista.total}</p>
+          </div>
+          <div className="rounded-lg border border-yellow-100 bg-yellow-50 p-3">
+            <p className="text-xs font-medium text-yellow-600">Pendentes</p>
+            <p className="mt-1 text-lg font-bold text-yellow-700">{resumoLista.pendentes}</p>
+          </div>
+          <div className="rounded-lg border border-red-100 bg-red-50 p-3">
+            <p className="text-xs font-medium text-red-600">Vencidas</p>
+            <p className="mt-1 text-lg font-bold text-red-700">{resumoLista.vencidas}</p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+            <p className="text-xs font-medium text-gray-500">Canceladas</p>
+            <p className="mt-1 text-lg font-bold text-gray-700">{resumoLista.canceladas}</p>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -117,7 +197,18 @@ export default function Financeiro() {
                   <td className="table-cell">{formatDate(c.pagamento)}</td>
                   <td className="table-cell"><span className={`badge ${STATUS_BADGE[c.status]}`}>{c.status}</span></td>
                   <td className="table-cell">
-                    {c.status === 'pendente' && <button onClick={() => pagar(c.id)} className="btn-success btn-sm">Pagar</button>}
+                    <div className="flex gap-2">
+                      {c.status === 'pendente' && (
+                        <button onClick={() => pagar(c.id)} disabled={actionLoadingId === c.id} className="btn-success btn-sm">
+                          {actionLoadingId === c.id ? 'Processando...' : 'Pagar'}
+                        </button>
+                      )}
+                      {c.status !== 'cancelado' && (
+                        <button onClick={() => cancelar(c.id)} disabled={actionLoadingId === c.id} className="btn-secondary btn-sm">
+                          {actionLoadingId === c.id ? 'Processando...' : 'Cancelar'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
