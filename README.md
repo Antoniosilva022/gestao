@@ -25,10 +25,12 @@ Ou configure um PostgreSQL local e ajuste o `.env`.
 cd backend
 npm install
 cp .env.example .env
-# Edite o .env com suas configurações de banco
+# Edite o .env com suas configurações de banco, defina um JWT_SECRET forte
 npm run migrate
 npm run dev
 ```
+
+Para executar o frontend em outro endereço, ajuste `CORS_ORIGIN` no `.env` do backend.
 
 ### 3. Frontend
 ```bash
