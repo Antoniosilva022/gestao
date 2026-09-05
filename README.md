@@ -16,9 +16,11 @@ Sistema completo de gestão empresarial com React + Node.js + PostgreSQL.
 
 ### 1. Banco de dados (com Docker)
 ```bash
-docker-compose up -d
+docker compose --env-file backend/.env up -d --build
 ```
 Ou configure um PostgreSQL local e ajuste o `.env`.
+
+O frontend da stack Docker fica em `http://localhost:8080`. Para evitar conflito com serviços locais, defina `BACKEND_PORT` e `FRONTEND_PORT` antes de executar o comando.
 
 ### 2. Backend
 ```bash
@@ -30,7 +32,7 @@ npm run migrate
 npm run dev
 ```
 
-Para executar o frontend em outro endereço, ajuste `CORS_ORIGIN` no `.env` do backend.
+Para executar o frontend em outro endereço, ajuste `CORS_ORIGIN` no `.env` do backend. Separe várias origens por vírgulas.
 
 ### 3. Frontend
 ```bash

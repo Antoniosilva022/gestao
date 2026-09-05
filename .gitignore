@@ -29,3 +29,4 @@ Thumbs.db
 *.seed
 *.pid.lock
 node_modules
+.tsupgrader/

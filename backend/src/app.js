@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { pool } = require('./config/database');
 
 const authRoutes = require('./routes/auth');
 const clientesRoutes = require('./routes/clientes');
@@ -19,13 +20,23 @@ const funcionariosRoutes = require('./routes/funcionarios');
 const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(helmet());
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok' });
+  } catch (err) {
+    res.status(503).json({ status: 'unavailable' });
+  }
+});
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
