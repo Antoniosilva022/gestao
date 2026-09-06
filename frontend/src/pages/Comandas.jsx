@@ -43,13 +43,16 @@ export default function Comandas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Comandas</h1>
-        <button onClick={openNova} className="btn-primary">+ Abrir Comanda</button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Comandas</h1>
+          <p className="text-sm text-gray-500">Mesas em atendimento</p>
+        </div>
+        <button onClick={openNova} className="btn-primary w-full sm:w-auto">+ Abrir Comanda</button>
       </div>
 
-      <div className="card">
-        <div className="flex gap-2">
+      <div className="card p-4 sm:p-6">
+        <div className="grid grid-cols-3 gap-2">
           <button type="button" onClick={() => setStatus('aberta')} className={status === 'aberta' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'}>
             Abertas
           </button>
@@ -60,7 +63,22 @@ export default function Comandas() {
             Canceladas
           </button>
         </div>
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 grid gap-3 sm:hidden">
+          {comandas.map((c) => (
+            <button key={c.id} type="button" onClick={() => navigate(`/comandas/${c.id}`)} className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm active:bg-blue-50">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-gray-800">{c.numero_comanda}</p>
+                  <p className="mt-1 text-sm text-gray-500">{c.mesa_ref || 'Sem mesa'}{c.cliente_nome ? ` · ${c.cliente_nome}` : ''}</p>
+                </div>
+                <span className="badge-green capitalize">{c.status}</span>
+              </div>
+              <p className="mt-3 text-xs text-gray-400">Aberta em {new Date(c.criado_em).toLocaleString('pt-BR')}</p>
+            </button>
+          ))}
+          {!comandas.length && <p className="py-6 text-center text-sm text-gray-400">Nenhuma comanda encontrada</p>}
+        </div>
+        <div className="mt-4 hidden overflow-x-auto sm:block">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>

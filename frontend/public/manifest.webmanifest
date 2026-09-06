@@ -1,0 +1,10 @@
+{
+  "name": "Gestão Empresa - Comandas",
+  "short_name": "Comandas",
+  "start_url": "/comandas",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "lang": "pt-BR",
+  "description": "Comandas e pedidos para atendimento de bar e restaurante"
+}
