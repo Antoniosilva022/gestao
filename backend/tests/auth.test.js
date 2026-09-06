@@ -70,3 +70,12 @@ test('POST /api/vendas rejeita item sem quantidade antes de acessar o banco', as
     pool.connect = originalConnect;
   }
 });
+
+test('garcom não pode acessar clientes', async () => {
+  const token = jwt.sign({ id: 2, empresa_id: 1, perfil: 'garcom' }, process.env.JWT_SECRET);
+  const res = await request(app)
+    .get('/api/clientes')
+    .set('Authorization', `Bearer ${token}`);
+
+  assert.equal(res.status, 403);
+});
