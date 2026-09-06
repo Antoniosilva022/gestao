@@ -18,6 +18,7 @@ const estoqueRoutes = require('./routes/estoque');
 const financeiroRoutes = require('./routes/financeiro');
 const funcionariosRoutes = require('./routes/funcionarios');
 const dashboardRoutes = require('./routes/dashboard');
+const restauranteRoutes = require('./routes/restaurante');
 
 const app = express();
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
@@ -55,6 +56,7 @@ app.use('/api/estoque', estoqueRoutes);
 app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/funcionarios', funcionariosRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/restaurante', restauranteRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
