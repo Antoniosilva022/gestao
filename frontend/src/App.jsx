@@ -9,6 +9,8 @@ const Clientes = lazy(() => import('./pages/Clientes'));
 const Produtos = lazy(() => import('./pages/Produtos'));
 const Vendas = lazy(() => import('./pages/Vendas'));
 const NovaVenda = lazy(() => import('./pages/NovaVenda'));
+const Comandas = lazy(() => import('./pages/Comandas'));
+const ComandaDetalhe = lazy(() => import('./pages/ComandaDetalhe'));
 const Estoque = lazy(() => import('./pages/Estoque'));
 const Financeiro = lazy(() => import('./pages/Financeiro'));
 const Funcionarios = lazy(() => import('./pages/Funcionarios'));
@@ -32,6 +34,8 @@ export default function App() {
             <Route path="produtos" element={<Produtos />} />
             <Route path="vendas" element={<Vendas />} />
             <Route path="vendas/nova" element={<NovaVenda />} />
+            <Route path="comandas" element={<Comandas />} />
+            <Route path="comandas/:id" element={<ComandaDetalhe />} />
             <Route path="estoque" element={<Estoque />} />
             <Route path="financeiro" element={<Financeiro />} />
             <Route path="funcionarios" element={<Funcionarios />} />

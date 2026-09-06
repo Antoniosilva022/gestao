@@ -6,6 +6,7 @@ const menus = [
   { to: '/clientes', label: 'Clientes', icon: '👥' },
   { to: '/produtos', label: 'Produtos', icon: '📦' },
   { to: '/vendas', label: 'Vendas', icon: '🛒' },
+  { to: '/comandas', label: 'Comandas', icon: '🍽️' },
   { to: '/estoque', label: 'Estoque', icon: '🏭' },
   { to: '/financeiro', label: 'Financeiro', icon: '💰' },
   { to: '/resumo-negocios', label: 'Resumo', icon: '📋' },
