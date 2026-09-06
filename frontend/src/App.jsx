@@ -22,6 +22,11 @@ function PrivateRoute({ children }) {
   return usuario ? children : <Navigate to="/login" replace />;
 }
 
+function RoleRoute({ roles, children }) {
+  const { usuario } = useAuth();
+  return roles.includes(usuario?.perfil) ? children : <Navigate to={usuario?.perfil === 'garcom' ? '/comandas' : '/'} replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -29,18 +34,18 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index element={<Dashboard />} />
-            <Route path="clientes" element={<Clientes />} />
-            <Route path="produtos" element={<Produtos />} />
-            <Route path="vendas" element={<Vendas />} />
-            <Route path="vendas/nova" element={<NovaVenda />} />
-            <Route path="comandas" element={<Comandas />} />
-            <Route path="comandas/:id" element={<ComandaDetalhe />} />
-            <Route path="estoque" element={<Estoque />} />
-            <Route path="financeiro" element={<Financeiro />} />
-            <Route path="funcionarios" element={<Funcionarios />} />
-            <Route path="usuarios" element={<Usuarios />} />
-            <Route path="resumo-negocios" element={<ResumoNegocios />} />
+            <Route index element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Dashboard /></RoleRoute>} />
+            <Route path="clientes" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Clientes /></RoleRoute>} />
+            <Route path="produtos" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Produtos /></RoleRoute>} />
+            <Route path="vendas" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Vendas /></RoleRoute>} />
+            <Route path="vendas/nova" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><NovaVenda /></RoleRoute>} />
+            <Route path="comandas" element={<RoleRoute roles={['admin', 'gerente', 'operador', 'garcom']}><Comandas /></RoleRoute>} />
+            <Route path="comandas/:id" element={<RoleRoute roles={['admin', 'gerente', 'operador', 'garcom']}><ComandaDetalhe /></RoleRoute>} />
+            <Route path="estoque" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Estoque /></RoleRoute>} />
+            <Route path="financeiro" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Financeiro /></RoleRoute>} />
+            <Route path="funcionarios" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Funcionarios /></RoleRoute>} />
+            <Route path="usuarios" element={<RoleRoute roles={['admin']}><Usuarios /></RoleRoute>} />
+            <Route path="resumo-negocios" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><ResumoNegocios /></RoleRoute>} />
           </Route>
         </Routes>
       </Suspense>

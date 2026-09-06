@@ -30,6 +30,22 @@ async function listar(req, res) {
   }
 }
 
+async function listarCardapio(req, res) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id, p.nome, p.descricao, p.preco, c.nome AS categoria_nome
+       FROM produtos p
+       LEFT JOIN categorias c ON c.id = p.categoria_id AND c.empresa_id = p.empresa_id
+       WHERE p.empresa_id = $1 AND p.ativo = true
+       ORDER BY c.nome NULLS LAST, p.nome`,
+      [req.empresaId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function buscar(req, res) {
   try {
     const empresaId = req.empresaId;
@@ -141,4 +157,4 @@ async function criarCategoria(req, res) {
   }
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, listarCategorias, criarCategoria };
+module.exports = { listar, listarCardapio, buscar, criar, atualizar, excluir, listarCategorias, criarCategoria };

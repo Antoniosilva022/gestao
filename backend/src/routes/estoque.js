@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/estoqueController');
 const { authMiddleware } = require('../middleware/auth');
+const { allowRoles } = require('../middleware/roles');
 
 router.use(authMiddleware);
+router.use(allowRoles('admin', 'gerente', 'operador'));
 router.get('/', ctrl.listar);
 router.get('/alerta', ctrl.estoqueBaixo);
 router.get('/historico', ctrl.historico);

@@ -3,8 +3,10 @@ const { body, param } = require('express-validator');
 const ctrl = require('../controllers/vendasController');
 const { authMiddleware } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const { allowRoles } = require('../middleware/roles');
 
 router.use(authMiddleware);
+router.use(allowRoles('admin', 'gerente', 'operador'));
 router.get('/', ctrl.listar);
 router.get('/relatorio/resumo', ctrl.relatorioResumo);
 router.get('/relatorio/produtos', ctrl.relatorioPorProduto);

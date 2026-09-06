@@ -2,16 +2,16 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const menus = [
-  { to: '/', label: 'Dashboard', icon: '📊', exact: true },
-  { to: '/clientes', label: 'Clientes', icon: '👥' },
-  { to: '/produtos', label: 'Produtos', icon: '📦' },
-  { to: '/vendas', label: 'Vendas', icon: '🛒' },
-  { to: '/comandas', label: 'Comandas', icon: '🍽️' },
-  { to: '/estoque', label: 'Estoque', icon: '🏭' },
-  { to: '/financeiro', label: 'Financeiro', icon: '💰' },
-  { to: '/resumo-negocios', label: 'Resumo', icon: '📋' },
-  { to: '/funcionarios', label: 'Funcionários', icon: '👤' },
-  { to: '/usuarios', label: 'Usuários', icon: '🔐', perfil: 'admin' },
+  { to: '/', label: 'Dashboard', icon: '📊', exact: true, perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/clientes', label: 'Clientes', icon: '👥', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/produtos', label: 'Produtos', icon: '📦', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/vendas', label: 'Vendas', icon: '🛒', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/comandas', label: 'Comandas', icon: '🍽️', perfis: ['admin', 'gerente', 'operador', 'garcom'] },
+  { to: '/estoque', label: 'Estoque', icon: '🏭', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/financeiro', label: 'Financeiro', icon: '💰', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/resumo-negocios', label: 'Resumo', icon: '📋', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/funcionarios', label: 'Funcionários', icon: '👤', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/usuarios', label: 'Usuários', icon: '🔐', perfis: ['admin'] },
 ];
 
 export default function Sidebar() {
@@ -25,7 +25,7 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menus.map((menu) => {
-          if (menu.perfil && usuario?.perfil !== menu.perfil) return null;
+          if (!menu.perfis.includes(usuario?.perfil)) return null;
           return (
             <NavLink
               key={menu.to}
