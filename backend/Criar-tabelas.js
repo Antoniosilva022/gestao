@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 
 // Coloquei aqui a URL Externa do seu banco da Render que apareceu na sua imagem
-const connectionString = 'postgresql://banco_bijuteria_user:8ZgBKAWcyRrHczyQyltq36A1kzQOwPec@dpg-daphfgvavr4c738lvc6g-a.ohio-postgres.render.com/banco_bijuteria';
+const connectionString = 'postgresql://banco_bijuteria_user:8ZgBkAWcyRrHczyQyIEq86A1kzQOwPec@dpg-daphfgvavr4c738lvc6g-a.ohio-postgres.render.com/banco_bijuteria';
 
 const pool = new Pool({
   connectionString: connectionString,
