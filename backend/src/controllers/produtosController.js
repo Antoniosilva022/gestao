@@ -10,6 +10,18 @@ function normalizeEstoqueValue(value) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
+function normalizeTexto(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+function normalizePeso(value) {
+  if (value === '' || value === undefined || value === null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 async function listar(req, res) {
   try {
     const empresaId = req.empresaId;
@@ -23,22 +35,6 @@ async function listar(req, res) {
        WHERE p.empresa_id = $1 AND p.ativo = $2 AND (p.nome ILIKE $3 OR p.codigo ILIKE $3)
        ORDER BY p.nome`,
       [empresaId, ativo === 'true', `%${search}%`]
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
-
-async function listarCardapio(req, res) {
-  try {
-    const { rows } = await pool.query(
-      `SELECT p.id, p.nome, p.descricao, p.preco, c.nome AS categoria_nome
-       FROM produtos p
-       LEFT JOIN categorias c ON c.id = p.categoria_id AND c.empresa_id = p.empresa_id
-       WHERE p.empresa_id = $1 AND p.ativo = true
-       ORDER BY c.nome NULLS LAST, p.nome`,
-      [req.empresaId]
     );
     res.json(rows);
   } catch (err) {
@@ -67,7 +63,7 @@ async function buscar(req, res) {
 
 async function criar(req, res) {
   const empresaId = req.empresaId;
-  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, estoque_atual, quantidade_minima } = req.body;
+  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, estoque_atual, quantidade_minima, material, banho, tamanho, peso_gramas } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
   const estoqueInicial = normalizeEstoqueValue(estoque_atual);
   const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
@@ -75,9 +71,9 @@ async function criar(req, res) {
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
-      `INSERT INTO produtos (empresa_id, nome, descricao, preco, custo, unidade, categoria_id, codigo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [empresaId, nome, descricao, preco, custo, unidade, categoriaId, codigo]
+      `INSERT INTO produtos (empresa_id, nome, descricao, preco, custo, unidade, categoria_id, codigo, material, banho, tamanho, peso_gramas)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [empresaId, nome, descricao, preco, custo, unidade, categoriaId, codigo, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas)]
     );
     await client.query(
       'INSERT INTO estoque (empresa_id, produto_id, quantidade, quantidade_minima) VALUES ($1, $2, $3, $4)',
@@ -95,7 +91,7 @@ async function criar(req, res) {
 
 async function atualizar(req, res) {
   const empresaId = req.empresaId;
-  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, ativo, estoque_atual, quantidade_minima } = req.body;
+  const { nome, descricao, preco, custo, unidade, categoria_id, codigo, ativo, estoque_atual, quantidade_minima, material, banho, tamanho, peso_gramas } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
   const estoqueAtual = normalizeEstoqueValue(estoque_atual);
   const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
@@ -103,9 +99,10 @@ async function atualizar(req, res) {
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
-      `UPDATE produtos SET nome=$1, descricao=$2, preco=$3, custo=$4, unidade=$5, categoria_id=$6, codigo=$7, ativo=$8
-       WHERE id=$9 AND empresa_id = $10 RETURNING *`,
-      [nome, descricao, preco, custo, unidade, categoriaId, codigo, ativo, req.params.id, empresaId]
+      `UPDATE produtos SET nome=$1, descricao=$2, preco=$3, custo=$4, unidade=$5, categoria_id=$6, codigo=$7, ativo=$8,
+              material=$9, banho=$10, tamanho=$11, peso_gramas=$12
+       WHERE id=$13 AND empresa_id = $14 RETURNING *`,
+      [nome, descricao, preco, custo, unidade, categoriaId, codigo, ativo, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas), req.params.id, empresaId]
     );
     if (!rows.length) {
       await client.query('ROLLBACK');
@@ -157,4 +154,4 @@ async function criarCategoria(req, res) {
   }
 }
 
-module.exports = { listar, listarCardapio, buscar, criar, atualizar, excluir, listarCategorias, criarCategoria };
+module.exports = { listar, buscar, criar, atualizar, excluir, listarCategorias, criarCategoria };

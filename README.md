@@ -1,16 +1,18 @@
-# Sistema de Gestão de Empresa
+# Sistema de Gestão para Loja de Bijuterias
 
-Sistema completo de gestão empresarial com React + Node.js + PostgreSQL.
+Sistema completo de gestão para loja de bijuterias e semijoias, com React + Node.js + PostgreSQL.
 
 ## Módulos
 - Dashboard com gráficos e KPIs
 - Clientes
-- Produtos e Categorias
+- Peças e Categorias (brincos, colares, anéis, pulseiras, etc.)
 - Vendas e PDV
 - Controle de Estoque
 - Financeiro (contas a pagar/receber)
 - Funcionários / RH
 - Usuários e controle de acesso (admin/gerente/operador)
+
+Cada peça possui atributos próprios do segmento: material, banho/cor, tamanho/medida e peso em gramas.
 
 ## Como rodar
 

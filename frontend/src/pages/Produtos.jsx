@@ -6,7 +6,11 @@ import Modal from '../components/Modal';
 import { formatCurrency } from '../utils/format';
 import { demoCategorias, demoProdutos } from '../utils/demoData';
 
-const EMPTY = { nome: '', descricao: '', preco: '', custo: '', unidade: 'UN', categoria_id: '', codigo: '', estoque_atual: '', quantidade_minima: '' };
+const EMPTY = { nome: '', descricao: '', preco: '', custo: '', unidade: 'UN', categoria_id: '', codigo: '', estoque_atual: '', quantidade_minima: '', material: '', banho: '', tamanho: '', peso_gramas: '' };
+
+const UNIDADES = ['UN', 'PAR', 'KIT', 'CX', 'PC', 'M'];
+const MATERIAIS = ['Latão', 'Aço Inoxidável', 'Prata 925', 'Zamá', 'Resina', 'Couro', 'Pedra Natural', 'Pérola', 'Cristal'];
+const BANHOS = ['Sem banho', 'Ouro 18k', 'Ouro Rose', 'Ródio', 'Ródio Negro', 'Prata Velha', 'Níquel Free'];
 
 function classifyStock(quantidade, minimo) {
   if (quantidade <= 0) return 'baixo';
@@ -105,16 +109,17 @@ export default function Produtos() {
       const payload = {
         ...form,
         categoria_id: form.categoria_id || null,
+        peso_gramas: form.peso_gramas === '' ? null : Number(form.peso_gramas),
         estoque_atual: form.estoque_atual === '' ? 0 : Number(form.estoque_atual),
         quantidade_minima: form.quantidade_minima === '' ? 0 : Number(form.quantidade_minima),
       };
 
       if (editId) {
         await api.put(`/produtos/${editId}`, payload);
-        toast.success('Produto atualizado!');
+        toast.success('Peça atualizada!');
       } else {
         await api.post('/produtos', payload);
-        toast.success('Produto cadastrado!');
+        toast.success('Peça cadastrada!');
       }
       setModal(false);
       await load();
@@ -160,7 +165,7 @@ export default function Produtos() {
       setQuickProduto(null);
       await load();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao atualizar produto');
+      toast.error(err.response?.data?.error || 'Erro ao atualizar peça');
     } finally {
       setQuickLoading(false);
     }
@@ -169,14 +174,14 @@ export default function Produtos() {
   async function handleAlterarStatus(produto) {
     const reativar = produto.ativo === false;
 
-    if (!confirm(reativar ? 'Reativar produto?' : 'Desativar produto?')) return;
+    if (!confirm(reativar ? 'Reativar peça?' : 'Desativar peça?')) return;
 
     if (reativar) {
       await api.put(`/produtos/${produto.id}`, { ...produto, ativo: true });
-      toast.success('Produto reativado');
+      toast.success('Peça reativada');
     } else {
       await api.delete(`/produtos/${produto.id}`);
-      toast.success('Produto desativado');
+      toast.success('Peça desativada');
     }
 
     await load();
@@ -188,8 +193,8 @@ export default function Produtos() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Produtos</h1>
-        <button onClick={openNovo} className="btn-primary">+ Novo Produto</button>
+        <h1 className="text-2xl font-bold text-gray-800">Peças</h1>
+        <button onClick={openNovo} className="btn-primary">+ Nova Peça</button>
       </div>
 
       <div className="card">
@@ -211,6 +216,7 @@ export default function Produtos() {
                 <th className="table-header">Código</th>
                 <th className="table-header">Nome</th>
                 <th className="table-header">Categoria</th>
+                <th className="table-header">Material / Banho</th>
                 <th className="table-header">Preço</th>
                 <th className="table-header">Custo</th>
                 <th className="table-header">Estoque</th>
@@ -223,6 +229,14 @@ export default function Produtos() {
                   <td className="table-cell text-gray-400">{p.codigo || '-'}</td>
                   <td className="table-cell font-medium">{p.nome}</td>
                   <td className="table-cell">{p.categoria_nome || '-'}</td>
+                  <td className="table-cell text-gray-500">
+                    {p.material || '-'}{p.banho ? ` · ${p.banho}` : ''}
+                    {(p.tamanho || p.peso_gramas) && (
+                      <div className="text-xs text-gray-400">
+                        {p.tamanho ? `Tam: ${p.tamanho}` : ''}{p.tamanho && p.peso_gramas ? ' · ' : ''}{p.peso_gramas ? `${p.peso_gramas} g` : ''}
+                      </div>
+                    )}
+                  </td>
                   <td className="table-cell text-green-600 font-medium">{formatCurrency(p.preco)}</td>
                   <td className="table-cell text-gray-500">{formatCurrency(p.custo)}</td>
                   <td className="table-cell">
@@ -243,14 +257,14 @@ export default function Produtos() {
                   </td>
                 </tr>
               ))}
-              {!produtos.length && <tr><td colSpan={7} className="table-cell text-center text-gray-400 py-8">Nenhum produto encontrado</td></tr>}
+              {!produtos.length && <tr><td colSpan={8} className="table-cell text-center text-gray-400 py-8">Nenhuma peça encontrada</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
       {modal && (
-        <Modal title={editId ? 'Editar Produto' : 'Novo Produto'} onClose={() => setModal(false)}>
+        <Modal title={editId ? 'Editar Peça' : 'Nova Peça'} onClose={() => setModal(false)}>
           <form onSubmit={handleSalvar} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
@@ -264,7 +278,7 @@ export default function Produtos() {
               <div>
                 <label className="label">Unidade</label>
                 <select className="input" {...f('unidade')}>
-                  {['UN', 'KG', 'L', 'M', 'CX', 'PC'].map((u) => <option key={u}>{u}</option>)}
+                  {UNIDADES.map((u) => <option key={u}>{u}</option>)}
                 </select>
               </div>
               <div>
@@ -274,6 +288,28 @@ export default function Produtos() {
               <div>
                 <label className="label">Custo</label>
                 <input className="input" type="number" step="0.01" min="0" {...f('custo')} />
+              </div>
+              <div>
+                <label className="label">Material</label>
+                <input className="input" list="materiais-bijuteria" placeholder="Ex: Prata 925" {...f('material')} />
+                <datalist id="materiais-bijuteria">
+                  {MATERIAIS.map((m) => <option key={m} value={m} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="label">Banho / Cor</label>
+                <input className="input" list="banhos-bijuteria" placeholder="Ex: Ouro 18k" {...f('banho')} />
+                <datalist id="banhos-bijuteria">
+                  {BANHOS.map((b) => <option key={b} value={b} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="label">Tamanho / Medida</label>
+                <input className="input" placeholder="Ex: aro 16, 45 cm" {...f('tamanho')} />
+              </div>
+              <div>
+                <label className="label">Peso (g)</label>
+                <input className="input" type="number" step="0.01" min="0" {...f('peso_gramas')} />
               </div>
               <div>
                 <label className="label">Estoque atual</label>

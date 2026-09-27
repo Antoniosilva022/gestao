@@ -26,11 +26,11 @@ export const demoDashboard = {
     { mes: 'Jun', total: 210000 }
   ],
   top_produtos: [
-    { nome: 'Notebook Ultra', receita: 12800 },
-    { nome: 'Mouse Sem Fio', receita: 9600 },
-    { nome: 'Teclado Mecânico', receita: 8420 },
-    { nome: 'Monitor 27"', receita: 7100 },
-    { nome: 'Webcam HD', receita: 5900 }
+    { nome: 'Brinco Argola Folheado', receita: 12800 },
+    { nome: 'Colar Ponto de Luz', receita: 9600 },
+    { nome: 'Anel Solitário Prata 925', receita: 8420 },
+    { nome: 'Pulseira Elos Dourada', receita: 7100 },
+    { nome: 'Conjunto Pérolas', receita: 5900 }
   ],
   funcionarios: [
     { status: 'ativos', count: 8 },
@@ -46,50 +46,46 @@ export const demoClientes = [
 ];
 
 export const demoProdutos = [
-  { id: 1, codigo: 'NTB-001', nome: 'Notebook Ultra', categoria_nome: 'Eletrônicos', preco: 4999, custo: 3200, estoque_atual: 12, unidade: 'UN' },
-  { id: 2, codigo: 'MOU-002', nome: 'Mouse Sem Fio', categoria_nome: 'Periféricos', preco: 189, custo: 95, estoque_atual: 40, unidade: 'UN' },
-  { id: 3, codigo: 'TEC-003', nome: 'Teclado Mecânico', categoria_nome: 'Periféricos', preco: 349, custo: 185, estoque_atual: 18, unidade: 'UN' }
+  { id: 1, codigo: 'BRI-001', nome: 'Brinco Argola Folheado', categoria_nome: 'Brincos', preco: 89.9, custo: 32, estoque_atual: 24, unidade: 'PAR', material: 'Latão', banho: 'Ouro 18k', tamanho: '3 cm', peso_gramas: 4.5 },
+  { id: 2, codigo: 'COL-002', nome: 'Colar Ponto de Luz', categoria_nome: 'Colares', preco: 129.9, custo: 48, estoque_atual: 15, unidade: 'UN', material: 'Prata 925', banho: 'Ródio', tamanho: '45 cm', peso_gramas: 3.2 },
+  { id: 3, codigo: 'ANE-003', nome: 'Anel Solitário Prata 925', categoria_nome: 'Anéis', preco: 149.9, custo: 62, estoque_atual: 10, unidade: 'UN', material: 'Prata 925', banho: 'Ródio', tamanho: '16', peso_gramas: 2.8 }
 ];
 
 export const demoCategorias = [
-  { id: 1, nome: 'Entradas' },
-  { id: 2, nome: 'Saladas' },
-  { id: 3, nome: 'Pratos Principais' },
-  { id: 4, nome: 'Massas' },
-  { id: 5, nome: 'Pizzas' },
-  { id: 6, nome: 'Lanches' },
-  { id: 7, nome: 'Hambúrgueres' },
-  { id: 8, nome: 'Porções' },
-  { id: 9, nome: 'Sobremesas' },
-  { id: 10, nome: 'Sorvetes' },
-  { id: 11, nome: 'Bebidas' },
-  { id: 12, nome: 'Refrigerantes' },
-  { id: 13, nome: 'Sucos' },
-  { id: 14, nome: 'Águas' },
-  { id: 15, nome: 'Cafés' },
-  { id: 16, nome: 'Chás' },
-  { id: 17, nome: 'Cervejas' },
-  { id: 18, nome: 'Vinhos' },
-  { id: 19, nome: 'Drinks' },
-  { id: 20, nome: 'Molhos e Complementos' },
-  { id: 21, nome: 'Carnes' },
-  { id: 22, nome: 'Frangos' },
-  { id: 23, nome: 'Peixes e Frutos do Mar' },
-  { id: 24, nome: 'Acompanhamentos' },
-  { id: 25, nome: 'Padaria e Café da Manhã' },
-  { id: 26, nome: 'Ingredientes' },
-  { id: 27, nome: 'Embalagens' },
-  { id: 28, nome: 'Limpeza e Higiene' }
+  { id: 1, nome: 'Brincos' },
+  { id: 2, nome: 'Colares' },
+  { id: 3, nome: 'Correntes' },
+  { id: 4, nome: 'Pingentes' },
+  { id: 5, nome: 'Anéis' },
+  { id: 6, nome: 'Pulseiras' },
+  { id: 7, nome: 'Braceletes' },
+  { id: 8, nome: 'Tornozeleiras' },
+  { id: 9, nome: 'Piercings' },
+  { id: 10, nome: 'Conjuntos' },
+  { id: 11, nome: 'Relógios' },
+  { id: 12, nome: 'Acessórios de Cabelo' },
+  { id: 13, nome: 'Bolsas e Carteiras' },
+  { id: 14, nome: 'Óculos' },
+  { id: 15, nome: 'Semijoias' },
+  { id: 16, nome: 'Prata 925' },
+  { id: 17, nome: 'Aço Inoxidável' },
+  { id: 18, nome: 'Pedras Naturais' },
+  { id: 19, nome: 'Infantil' },
+  { id: 20, nome: 'Masculino' },
+  { id: 21, nome: 'Embalagens' },
+  { id: 22, nome: 'Expositores' },
+  { id: 23, nome: 'Insumos e Reparos' },
+  { id: 24, nome: 'Limpeza e Conservação' }
 ];
 
 export const demoVendas = [
-  { id: 1, cliente_nome: 'Maria Silva', criado_em: '2026-08-01T10:30:00', total: 4999, forma_pagamento: 'Cartão', status: 'fechada' },
-  { id: 2, cliente_nome: 'João Pereira', criado_em: '2026-08-02T14:00:00', total: 538, forma_pagamento: 'Pix', status: 'aberta' }
+  { id: 1, cliente_nome: 'Maria Silva', criado_em: '2026-08-01T10:30:00', total: 219.8, forma_pagamento: 'Cartão', status: 'fechada' },
+  { id: 2, cliente_nome: 'João Pereira', criado_em: '2026-08-02T14:00:00', total: 89.9, forma_pagamento: 'Pix', status: 'aberta' }
 ];
 
 export const demoEstoque = [
-  { id: 1, produto_nome: 'Notebook Ultra', estoque_atual: 12, estoque_minimo: 5 },
-  { id: 2, produto_nome: 'Mouse Sem Fio', estoque_atual: 40, estoque_minimo: 10 }
+  { id: 1, produto_nome: 'Brinco Argola Folheado', estoque_atual: 24, estoque_minimo: 6 },
+  { id: 2, produto_nome: 'Colar Ponto de Luz', estoque_atual: 15, estoque_minimo: 5 }
 ];
 
 export const demoFinanceiro = {
@@ -105,7 +101,7 @@ export const demoFinanceiro = {
 export const demoFuncionarios = [
   { id: 1, nome: 'Carlos Mendes', cargo: 'Gerente', status: 'ativo' },
   { id: 2, nome: 'Beatriz Lima', cargo: 'Vendedora', status: 'ativo' },
-  { id: 3, nome: 'Rafael Nunes', cargo: 'Suporte', status: 'ferias' }
+  { id: 3, nome: 'Rafael Nunes', cargo: 'Estoquista', status: 'ferias' }
 ];
 
 export const demoUsuarios = [
