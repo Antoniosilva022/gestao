@@ -4,10 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 const menus = [
   { to: '/', label: 'Dashboard', icon: '📊', exact: true, perfis: ['admin', 'gerente', 'operador'] },
   { to: '/clientes', label: 'Clientes', icon: '👥', perfis: ['admin', 'gerente', 'operador'] },
-  { to: '/produtos', label: 'Produtos', icon: '📦', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/produtos', label: 'Peças', icon: '📿', perfis: ['admin', 'gerente', 'operador'] },
   { to: '/vendas', label: 'Vendas', icon: '🛒', perfis: ['admin', 'gerente', 'operador'] },
-  { to: '/comandas', label: 'Comandas', icon: '🍽️', perfis: ['admin', 'gerente', 'operador', 'garcom'] },
-  { to: '/estoque', label: 'Estoque', icon: '🏭', perfis: ['admin', 'gerente', 'operador'] },
+  { to: '/estoque', label: 'Estoque', icon: '💍', perfis: ['admin', 'gerente', 'operador'] },
   { to: '/financeiro', label: 'Financeiro', icon: '💰', perfis: ['admin', 'gerente', 'operador'] },
   { to: '/resumo-negocios', label: 'Resumo', icon: '📋', perfis: ['admin', 'gerente', 'operador'] },
   { to: '/funcionarios', label: 'Funcionários', icon: '👤', perfis: ['admin', 'gerente', 'operador'] },
@@ -20,8 +19,8 @@ export default function Sidebar() {
   return (
     <aside className="fixed bottom-0 left-0 right-0 z-40 flex h-16 bg-blue-900 text-white shadow-[0_-4px_16px_rgba(15,23,42,0.18)] md:static md:h-auto md:w-64 md:flex-col md:shadow-none">
       <div className="hidden p-6 md:block md:border-b md:border-blue-800">
-        <h1 className="text-xl font-bold">🏢 Gestão Empresa</h1>
-        <p className="text-blue-300 text-xs mt-1">Sistema de Gestão</p>
+        <h1 className="text-xl font-bold">💎 Gestão Bijuterias</h1>
+        <p className="text-blue-300 text-xs mt-1">Sistema para loja de bijuterias</p>
       </div>
       <nav className="flex w-full items-stretch justify-around gap-1 overflow-x-auto p-1 md:block md:flex-1 md:space-y-1 md:overflow-y-auto md:p-4">
         {menus.map((menu) => {

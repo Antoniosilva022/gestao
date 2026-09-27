@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS empresas (
 );
 
 INSERT INTO empresas (id, nome, slug, ativo)
-VALUES (1, 'Empresa Demo', 'empresa-demo', true)
+VALUES (1, 'Bijuteria Demo', 'bijuteria-demo', true)
 ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -84,6 +84,10 @@ CREATE TABLE IF NOT EXISTS produtos (
   unidade VARCHAR(20) DEFAULT 'UN',
   categoria_id INTEGER REFERENCES categorias(id),
   codigo VARCHAR(50) UNIQUE,
+  material VARCHAR(80),
+  banho VARCHAR(80),
+  tamanho VARCHAR(40),
+  peso_gramas NUMERIC(10,2),
   ativo BOOLEAN DEFAULT true,
   criado_em TIMESTAMP DEFAULT NOW()
 );
@@ -160,52 +164,6 @@ CREATE TABLE IF NOT EXISTS contas (
   criado_em TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS comandas (
-  id SERIAL PRIMARY KEY,
-  numero_comanda VARCHAR(30) NOT NULL UNIQUE,
-  mesa_ref VARCHAR(30),
-  cliente_id INTEGER REFERENCES clientes(id),
-  usuario_abertura_id INTEGER REFERENCES usuarios(id),
-  status VARCHAR(20) DEFAULT 'aberta' CHECK (status IN ('aberta', 'fechada', 'cancelada')),
-  observacoes TEXT,
-  criado_em TIMESTAMP DEFAULT NOW(),
-  fechado_em TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS pedidos (
-  id SERIAL PRIMARY KEY,
-  comanda_id INTEGER REFERENCES comandas(id) ON DELETE SET NULL,
-  cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
-  usuario_id INTEGER REFERENCES usuarios(id),
-  mesa_ref VARCHAR(30),
-  status VARCHAR(20) DEFAULT 'aberto' CHECK (status IN ('aberto', 'preparo', 'entregue', 'fechado', 'cancelado')),
-  desconto_valor NUMERIC(10,2) DEFAULT 0,
-  taxa_servico_pct NUMERIC(5,2) DEFAULT 10,
-  observacoes TEXT,
-  criado_em TIMESTAMP DEFAULT NOW(),
-  atualizado_em TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS itens_pedido (
-  id SERIAL PRIMARY KEY,
-  pedido_id INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-  produto_id INTEGER NOT NULL REFERENCES produtos(id),
-  quantidade NUMERIC(10,3) NOT NULL CHECK (quantidade > 0),
-  preco_unitario NUMERIC(10,2) NOT NULL CHECK (preco_unitario >= 0),
-  observacao TEXT,
-  status_item VARCHAR(20) DEFAULT 'solicitado' CHECK (status_item IN ('solicitado', 'preparo', 'pronto', 'entregue', 'cancelado')),
-  subtotal NUMERIC(10,2) GENERATED ALWAYS AS (quantidade * preco_unitario) STORED
-);
-
-CREATE TABLE IF NOT EXISTS pagamentos_pedido (
-  id SERIAL PRIMARY KEY,
-  pedido_id INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-  forma_pagamento VARCHAR(25) NOT NULL CHECK (forma_pagamento IN ('dinheiro', 'pix', 'debito', 'credito', 'voucher')),
-  valor NUMERIC(10,2) NOT NULL CHECK (valor > 0),
-  status VARCHAR(20) DEFAULT 'confirmado' CHECK (status IN ('pendente', 'confirmado', 'cancelado')),
-  pago_em TIMESTAMP DEFAULT NOW()
-);
-
 -- Pilar 1: multiempresa (tenant)
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
 ALTER TABLE clientes ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
@@ -217,10 +175,12 @@ ALTER TABLE vendas ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
 ALTER TABLE itens_venda ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
 ALTER TABLE funcionarios ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
 ALTER TABLE contas ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
-ALTER TABLE comandas ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
-ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
-ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
-ALTER TABLE pagamentos_pedido ADD COLUMN IF NOT EXISTS empresa_id INTEGER;
+
+-- Atributos de bijuteria
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS material VARCHAR(80);
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS banho VARCHAR(80);
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS tamanho VARCHAR(40);
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS peso_gramas NUMERIC(10,2);
 
 UPDATE usuarios SET empresa_id = 1 WHERE empresa_id IS NULL;
 UPDATE clientes SET empresa_id = 1 WHERE empresa_id IS NULL;
@@ -232,10 +192,6 @@ UPDATE vendas SET empresa_id = 1 WHERE empresa_id IS NULL;
 UPDATE itens_venda SET empresa_id = 1 WHERE empresa_id IS NULL;
 UPDATE funcionarios SET empresa_id = 1 WHERE empresa_id IS NULL;
 UPDATE contas SET empresa_id = 1 WHERE empresa_id IS NULL;
-UPDATE comandas SET empresa_id = 1 WHERE empresa_id IS NULL;
-UPDATE pedidos SET empresa_id = 1 WHERE empresa_id IS NULL;
-UPDATE itens_pedido SET empresa_id = 1 WHERE empresa_id IS NULL;
-UPDATE pagamentos_pedido SET empresa_id = 1 WHERE empresa_id IS NULL;
 
 ALTER TABLE usuarios ALTER COLUMN empresa_id SET DEFAULT 1;
 ALTER TABLE clientes ALTER COLUMN empresa_id SET DEFAULT 1;
@@ -247,10 +203,6 @@ ALTER TABLE vendas ALTER COLUMN empresa_id SET DEFAULT 1;
 ALTER TABLE itens_venda ALTER COLUMN empresa_id SET DEFAULT 1;
 ALTER TABLE funcionarios ALTER COLUMN empresa_id SET DEFAULT 1;
 ALTER TABLE contas ALTER COLUMN empresa_id SET DEFAULT 1;
-ALTER TABLE comandas ALTER COLUMN empresa_id SET DEFAULT 1;
-ALTER TABLE pedidos ALTER COLUMN empresa_id SET DEFAULT 1;
-ALTER TABLE itens_pedido ALTER COLUMN empresa_id SET DEFAULT 1;
-ALTER TABLE pagamentos_pedido ALTER COLUMN empresa_id SET DEFAULT 1;
 
 ALTER TABLE usuarios ALTER COLUMN empresa_id SET NOT NULL;
 ALTER TABLE clientes ALTER COLUMN empresa_id SET NOT NULL;
@@ -262,10 +214,6 @@ ALTER TABLE vendas ALTER COLUMN empresa_id SET NOT NULL;
 ALTER TABLE itens_venda ALTER COLUMN empresa_id SET NOT NULL;
 ALTER TABLE funcionarios ALTER COLUMN empresa_id SET NOT NULL;
 ALTER TABLE contas ALTER COLUMN empresa_id SET NOT NULL;
-ALTER TABLE comandas ALTER COLUMN empresa_id SET NOT NULL;
-ALTER TABLE pedidos ALTER COLUMN empresa_id SET NOT NULL;
-ALTER TABLE itens_pedido ALTER COLUMN empresa_id SET NOT NULL;
-ALTER TABLE pagamentos_pedido ALTER COLUMN empresa_id SET NOT NULL;
 
 DO $$
 BEGIN
@@ -273,34 +221,30 @@ BEGIN
   SELECT 1, cat.nome, cat.descricao
   FROM (
     VALUES
-      ('Entradas', 'Porções leves e itens de abertura do cardápio'),
-      ('Saladas', 'Saladas frias e pratos leves'),
-      ('Pratos Principais', 'Pratos executivos e pratos completos'),
-      ('Massas', 'Massas, lasanhas e nhoques'),
-      ('Pizzas', 'Pizzas individuais ou grandes'),
-      ('Lanches', 'Sanduíches, salgados e lanches rápidos'),
-      ('Hambúrgueres', 'Hambúrgueres artesanais ou tradicionais'),
-      ('Porções', 'Porções para compartilhar'),
-      ('Sobremesas', 'Doces e sobremesas em geral'),
-      ('Sorvetes', 'Sorvetes, gelatos e taças'),
-      ('Bebidas', 'Bebidas em geral'),
-      ('Refrigerantes', 'Refrigerantes e bebidas gaseificadas'),
-      ('Sucos', 'Sucos naturais e industrializados'),
-      ('Águas', 'Águas com e sem gás'),
-      ('Cafés', 'Cafés, expressos e especiais'),
-      ('Chás', 'Chás quentes ou gelados'),
-      ('Cervejas', 'Cervejas nacionais e artesanais'),
-      ('Vinhos', 'Vinhos e espumantes'),
-      ('Drinks', 'Coquetéis e drinks alcoólicos'),
-      ('Molhos e Complementos', 'Molhos, adicionais e acompanhamentos'),
-      ('Carnes', 'Carnes bovinas, suínas e nobres'),
-      ('Frangos', 'Preparos com frango'),
-      ('Peixes e Frutos do Mar', 'Peixes, camarões e frutos do mar'),
-      ('Acompanhamentos', 'Arroz, batata, farofa e similares'),
-      ('Padaria e Café da Manhã', 'Pães, frios e itens de café da manhã'),
-      ('Ingredientes', 'Itens de estoque e insumos de cozinha'),
-      ('Embalagens', 'Potes, sacolas e itens para delivery'),
-      ('Limpeza e Higiene', 'Itens de limpeza e uso operacional')
+      ('Brincos', 'Brincos de argola, ear cuff, pressão e furo'),
+      ('Colares', 'Colares, gargantilhas e chokers'),
+      ('Correntes', 'Correntes avulsas e cordões'),
+      ('Pingentes', 'Pingentes e berloques'),
+      ('Anéis', 'Anéis lisos, solitários e falanges'),
+      ('Pulseiras', 'Pulseiras rígidas, elos e de couro'),
+      ('Braceletes', 'Braceletes e algemas'),
+      ('Tornozeleiras', 'Tornozeleiras e pulseiras de pé'),
+      ('Piercings', 'Piercings de orelha, nariz e corpo'),
+      ('Conjuntos', 'Kits e conjuntos combinados'),
+      ('Relógios', 'Relógios femininos e masculinos'),
+      ('Acessórios de Cabelo', 'Presilhas, tiaras, xuxinhas e bicos de pato'),
+      ('Bolsas e Carteiras', 'Bolsas, clutches e carteiras'),
+      ('Óculos', 'Óculos de sol e armações'),
+      ('Semijoias', 'Peças folheadas com garantia estendida'),
+      ('Prata 925', 'Peças em prata de lei'),
+      ('Aço Inoxidável', 'Peças em aço antialérgico'),
+      ('Pedras Naturais', 'Peças com quartzo, ágata e cristais'),
+      ('Infantil', 'Bijuterias infantis e antialérgicas'),
+      ('Masculino', 'Linha masculina de acessórios'),
+      ('Embalagens', 'Caixinhas, saquinhos e sacolas'),
+      ('Expositores', 'Displays, mostruários e organizadores'),
+      ('Insumos e Reparos', 'Fechos, argolas, fios e itens de conserto'),
+      ('Limpeza e Conservação', 'Flanelas, banhos e produtos de limpeza')
   ) AS cat(nome, descricao)
   WHERE NOT EXISTS (
     SELECT 1 FROM categorias c
@@ -340,34 +284,19 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'contas_empresa_id_fkey') THEN
     ALTER TABLE contas ADD CONSTRAINT contas_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas(id);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'comandas_empresa_id_fkey') THEN
-    ALTER TABLE comandas ADD CONSTRAINT comandas_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas(id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pedidos_empresa_id_fkey') THEN
-    ALTER TABLE pedidos ADD CONSTRAINT pedidos_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas(id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'itens_pedido_empresa_id_fkey') THEN
-    ALTER TABLE itens_pedido ADD CONSTRAINT itens_pedido_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas(id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pagamentos_pedido_empresa_id_fkey') THEN
-    ALTER TABLE pagamentos_pedido ADD CONSTRAINT pagamentos_pedido_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas(id);
-  END IF;
 END $$;
 
 -- Pilar 2: unicidade por empresa
 ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_email_key;
 ALTER TABLE produtos DROP CONSTRAINT IF EXISTS produtos_codigo_key;
-ALTER TABLE comandas DROP CONSTRAINT IF EXISTS comandas_numero_comanda_key;
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_usuarios_empresa_email ON usuarios (empresa_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_produtos_empresa_codigo ON produtos (empresa_id, codigo) WHERE codigo IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS ux_comandas_empresa_numero ON comandas (empresa_id, numero_comanda);
 
 -- Pilar 3: índices de performance
 CREATE INDEX IF NOT EXISTS idx_clientes_empresa_id ON clientes (empresa_id);
 CREATE INDEX IF NOT EXISTS idx_produtos_empresa_id ON produtos (empresa_id);
 CREATE INDEX IF NOT EXISTS idx_vendas_empresa_data ON vendas (empresa_id, criado_em DESC);
-CREATE INDEX IF NOT EXISTS idx_pedidos_empresa_data ON pedidos (empresa_id, criado_em DESC);
 CREATE INDEX IF NOT EXISTS idx_contas_empresa_status_vencimento ON contas (empresa_id, status, vencimento);
 
 -- Pilar 4: trilha de auditoria base

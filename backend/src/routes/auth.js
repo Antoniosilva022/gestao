@@ -30,7 +30,7 @@ router.post(
     body('nome').notEmpty().withMessage('Nome é obrigatório'),
     body('email').isEmail().withMessage('Email inválido'),
     body('senha').isLength({ min: 6 }).withMessage('Senha deve ter ao menos 6 caracteres'),
-    body('perfil').optional().isIn(['admin', 'gerente', 'operador', 'garcom']).withMessage('Perfil inválido')
+    body('perfil').optional().isIn(['admin', 'gerente', 'operador']).withMessage('Perfil inválido')
   ],
   validate,
   ctrl.criarUsuario

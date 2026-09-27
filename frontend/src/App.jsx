@@ -9,8 +9,6 @@ const Clientes = lazy(() => import('./pages/Clientes'));
 const Produtos = lazy(() => import('./pages/Produtos'));
 const Vendas = lazy(() => import('./pages/Vendas'));
 const NovaVenda = lazy(() => import('./pages/NovaVenda'));
-const Comandas = lazy(() => import('./pages/Comandas'));
-const ComandaDetalhe = lazy(() => import('./pages/ComandaDetalhe'));
 const Estoque = lazy(() => import('./pages/Estoque'));
 const Financeiro = lazy(() => import('./pages/Financeiro'));
 const Funcionarios = lazy(() => import('./pages/Funcionarios'));
@@ -24,7 +22,7 @@ function PrivateRoute({ children }) {
 
 function RoleRoute({ roles, children }) {
   const { usuario } = useAuth();
-  return roles.includes(usuario?.perfil) ? children : <Navigate to={usuario?.perfil === 'garcom' ? '/comandas' : '/'} replace />;
+  return roles.includes(usuario?.perfil) ? children : <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -39,8 +37,6 @@ export default function App() {
             <Route path="produtos" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Produtos /></RoleRoute>} />
             <Route path="vendas" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Vendas /></RoleRoute>} />
             <Route path="vendas/nova" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><NovaVenda /></RoleRoute>} />
-            <Route path="comandas" element={<RoleRoute roles={['admin', 'gerente', 'operador', 'garcom']}><Comandas /></RoleRoute>} />
-            <Route path="comandas/:id" element={<RoleRoute roles={['admin', 'gerente', 'operador', 'garcom']}><ComandaDetalhe /></RoleRoute>} />
             <Route path="estoque" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Estoque /></RoleRoute>} />
             <Route path="financeiro" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Financeiro /></RoleRoute>} />
             <Route path="funcionarios" element={<RoleRoute roles={['admin', 'gerente', 'operador']}><Funcionarios /></RoleRoute>} />
