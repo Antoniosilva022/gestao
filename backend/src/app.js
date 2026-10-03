@@ -37,7 +37,11 @@ app.get('/health', async (req, res) => {
     res.status(503).json({ status: 'unavailable' });
   }
 });
-
+app.get('/ready', async (req, res) => {
+  res.json({
+     status: 'ok' });
+     message: 'Servidor pronto para receber requisições' });
+  
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
