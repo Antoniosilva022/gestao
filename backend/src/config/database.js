@@ -1,15 +1,18 @@
 const { Pool } = require('pg');
 
 const isproduction = process.env.NODE_ENV === 'production';
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  connectionString: process.env.DATABESE_URL,
-ssl: isproduction ? { rejectUnauthorized: false } : false
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: isproduction ? { rejectUnauthorized: false } : false
+    })
+  : new Pool({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD
+    });
 
 async function testConnection() {
   try {
