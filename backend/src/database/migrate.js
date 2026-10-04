@@ -330,7 +330,7 @@ async function migrate() {
     await pool.query(migrations);
     console.log('Migrações executadas com sucesso!');
   } catch (err) {
-    console.error('Erro ao executar migrações:', err.message);
+    console.error('Erro ao executar migrações:', err);
     process.exitCode = 1;
   } finally {
     await pool.end();
