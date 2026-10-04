@@ -3,13 +3,14 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 
 async function login(req, res) {
-  const { email, senha, empresa_id = 1 } = req.body;
+  const { senha, empresa_id = 1 } = req.body;
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   if (!email || !senha) {
     return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   }
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM usuarios WHERE email = $1 AND empresa_id = $2 AND ativo = true',
+      'SELECT * FROM usuarios WHERE LOWER(email) = $1 AND empresa_id = $2 AND ativo = true',
       [email, empresa_id]
     );
     if (!rows.length) return res.status(401).json({ error: 'Credenciais inválidas' });

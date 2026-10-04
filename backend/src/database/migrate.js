@@ -3,6 +3,10 @@ const { Client } = require('pg');
 const { pool } = require('../config/database');
 
 async function ensureDatabaseExists() {
+  if (process.env.DATABASE_URL) {
+    return;
+  }
+
   const databaseName = process.env.DB_NAME;
 
   if (!databaseName) {
@@ -327,6 +331,7 @@ async function migrate() {
     console.log('Migrações executadas com sucesso!');
   } catch (err) {
     console.error('Erro ao executar migrações:', err.message);
+    process.exitCode = 1;
   } finally {
     await pool.end();
   }

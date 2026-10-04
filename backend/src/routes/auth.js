@@ -6,7 +6,7 @@ const { validate } = require('../middleware/validate');
 
 router.post(
   '/login',
-  [body('email').isEmail().withMessage('Email inválido'), body('senha').notEmpty().withMessage('Senha é obrigatória')],
+  [body('email').trim().isEmail().withMessage('Email inválido'), body('senha').notEmpty().withMessage('Senha é obrigatória')],
   validate,
   ctrl.login
 );

@@ -36,6 +36,11 @@ npm run dev
 
 Para executar o frontend em outro endereço, ajuste `CORS_ORIGIN` no `.env` do backend. Separe várias origens por vírgulas.
 
+### Banco PostgreSQL no Render
+Configure `DATABASE_URL` nas variáveis de ambiente do serviço do backend usando a URL fornecida pelo Render. Para criar/atualizar as tabelas e inserir o usuário administrador inicial quando ele ainda não existir, execute `npm run migrate` no diretório `backend` com essa variável configurada. O comando não cria bancos no Render: o banco deve existir previamente.
+
+Após a migração, o acesso inicial é `admin@empresa.com` / `admin123`, somente se esse usuário ainda não tiver sido cadastrado. A migração não redefine a senha de uma conta já existente. Altere a senha inicial após entrar.
+
 ### 3. Frontend
 ```bash
 cd frontend

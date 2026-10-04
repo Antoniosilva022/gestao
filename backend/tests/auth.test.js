@@ -10,6 +10,7 @@ process.env.DB_PASSWORD = 'test';
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { pool } = require('../src/config/database');
 const app = require('../src/app');
 
@@ -51,6 +52,37 @@ test('POST /api/auth/login rejeita email invalido antes de tocar no banco', asyn
 test('POST /api/auth/login rejeita senha vazia', async () => {
   const res = await request(app).post('/api/auth/login').send({ email: 'user@empresa.com', senha: '' });
   assert.equal(res.status, 400);
+});
+
+test('POST /api/auth/login normaliza espaços e maiúsculas do email', async () => {
+  const originalQuery = pool.query;
+  const senhaHash = await bcrypt.hash('senha-segura', 4);
+  pool.query = async (query, params) => {
+    assert.match(query, /LOWER\(email\)/);
+    assert.deepEqual(params, ['user@empresa.com', 1]);
+    return {
+      rows: [{
+        id: 3,
+        nome: 'Usuário de teste',
+        email: 'user@empresa.com',
+        senha: senhaHash,
+        perfil: 'admin',
+        empresa_id: 1
+      }]
+    };
+  };
+
+  try {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: ' USER@EMPRESA.COM ', senha: 'senha-segura' });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.usuario.email, 'user@empresa.com');
+    assert.ok(res.body.token);
+  } finally {
+    pool.query = originalQuery;
+  }
 });
 
 test('POST /api/vendas rejeita item sem quantidade antes de acessar o banco', async () => {
