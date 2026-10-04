@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gestao-bijuteria-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://gestao-q8vq.onrender.com/api
