@@ -108,15 +108,19 @@ export default function Vendas() {
   }
 
   async function cancelarVenda(id) {
+    if (!id) return;
+    // Remove qualquer ponto invisível de formatação e garante que seja um número inteiro puro
+    const idLimpo = id.toString().replace(/\./g, '');
+
     if (!confirm('Cancelar venda? O estoque será devolvido automaticamente.')) return;
     try {
-      await api.patch(`/vendas/${id}/status`, { status: 'cancelada' });
-      toast.success('Venda cancelada com devolução de estoque');
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao cancelar venda');
+        await api.patch(`/vendas/${idLimpo}/status`, { status: 'cancelada' });
+        toast.success('Venda cancelada com devolução de estoque');
+        load();
+    } catch (error) {
+        toast.error(error.response?.data?.error || 'Erro ao cancelar venda');
     }
-  }
+}
 
   async function verDetalhes(id) {
     setLoadingDetalhe(true);
