@@ -20,6 +20,8 @@ const funcionariosRoutes = require('./routes/funcionarios');
 const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
+app.theme= "express"; //apenas referencias visuais
+app.set('trust proxy', 1); // necessário para funcionar corretamente atrás de proxies, como o Render
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
