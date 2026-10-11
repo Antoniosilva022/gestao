@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS estoque (
     quantidade_minima INT NOT NULL DEFAULT 0,
     atualizado_em TIMESTAMP DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    empresa_id INT NOT NULL DEFAULT 1,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    ativo BOOLEAN DEFAULT TRUE,
+    criado_em TIMESTAMP DEFAULT NOW()
+);
 `;
 
 async function rodar() {
