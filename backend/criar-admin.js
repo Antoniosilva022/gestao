@@ -1,25 +1,33 @@
-const { pool } = require('./src/config/database'); // Ajuste o caminho se o seu arquivo database.js estiver em outro lugar
+const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
+require('dotenv').config(); 
+
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    ssl: { rejectUnauthorized: false }
+});
 
 async function criarUsuarioAdmin() {
     try {
-        console.log('Conectando ao banco da Render para criar o administrador...');
+        console.log('Conectando ao banco da Render usando os dados do .env...');
         
-        // Criptografa a senha para salvar com segurança no banco
         const senhaCriptografada = await bcrypt.hash('admin123', 10); 
         
         const query = `
             INSERT INTO usuarios (empresa_id, nome, email, senha, ativo)
-            VALUES (1, 'Administrador', 'admin@empresa.com', $1, true)
-            ON CONFLICT (email) DO NOTHING;
+            VALUES (1, 'Administrador', 'admin@empresa.com', $1, true);
         `;
         
         await pool.query(query, [senhaCriptografada]);
-        console.log('🎉 Usuário admin@empresa.com criado com sucesso na Render!');
-        console.log('🔑 Sua senha de acesso temporária é: admin123');
+        console.log('🎉 Perfeito! Usuário admin@empresa.com criado com sucesso na Render!');
+        console.log('🔑 Senha de acesso temporária: admin123');
         
     } catch (error) {
-        console.error('❌ Erro ao criar usuário admin:', error.message);
+        console.error('❌ Erro ao criar usuário:', error.message);
     } finally {
         await pool.end();
     }
