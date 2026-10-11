@@ -29,7 +29,7 @@ const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
 
 app.use(helmet());
 app.use(cors({
-   origin: CORS_ORIGIN,
+   origin: 'https://gestao-bijuteria-frontend.onrender.com',
     credentials: true 
   }));
 app.use(express.json());
