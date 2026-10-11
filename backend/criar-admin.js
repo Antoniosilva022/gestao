@@ -17,14 +17,19 @@ async function criarUsuarioAdmin() {
         
         const senhaCriptografada = await bcrypt.hash('admin123', 10); 
         
-        const query = `
+        // Etapa 1: Limpa o admin antigo se ele já existir
+        const queryDelete = "DELETE FROM usuarios WHERE email = 'admin@empresa.com';";
+        await pool.query(queryDelete);
+        
+        // Etapa 2: Insere o admin novo com a senha zerada e correta
+        const queryInsert = `
             INSERT INTO usuarios (empresa_id, nome, email, senha, ativo)
             VALUES (1, 'Administrador', 'admin@empresa.com', $1, true);
         `;
-        
-        await pool.query(query, [senhaCriptografada]);
-        console.log('🎉 Perfeito! Usuário admin@empresa.com criado com sucesso na Render!');
-        console.log('🔑 Senha de acesso temporária: admin123');
+        await pool.query(queryInsert, [senhaCriptografada]);
+
+        console.log('🎉 Perfeito! Usuário admin@empresa.com recriado com sucesso na Render!');
+        console.log('🔑 Senha de acesso atualizada para: admin123');
         
     } catch (error) {
         console.error('❌ Erro ao criar usuário:', error.message);
@@ -32,5 +37,3 @@ async function criarUsuarioAdmin() {
         await pool.end();
     }
 }
-
-criarUsuarioAdmin();
