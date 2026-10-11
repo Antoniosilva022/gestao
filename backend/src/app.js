@@ -28,7 +28,10 @@ const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .filter(Boolean);
 
 app.use(helmet());
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+app.use(cors({
+   origin: CORS_ORIGIN,
+    credentials: true 
+  }));
 app.use(express.json());
 
 app.get('/health', async (req, res) => {
