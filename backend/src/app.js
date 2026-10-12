@@ -26,11 +26,16 @@ const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const allowedOrigins = ['https://gestao-bijuteria-frontend.onrender.com'];
+
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push(...CORS_ORIGIN);
+}
 
 app.use(helmet());
 app.use(cors({
-   origin: 'https://gestao-bijuteria-frontend.onrender.com',
-    credentials: true 
+  origin: allowedOrigins,
+  credentials: true
   }));
 app.use(express.json());
 
