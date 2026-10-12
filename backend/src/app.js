@@ -32,11 +32,24 @@ if (process.env.NODE_ENV !== 'production') {
   allowedOrigins.push(...CORS_ORIGIN);
 }
 
+function isLocalDevelopmentOrigin(origin) {
+  if (process.env.NODE_ENV === 'production') return false;
+
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 app.use(helmet());
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    callback(null, !origin || allowedOrigins.includes(origin) || isLocalDevelopmentOrigin(origin));
+  },
   credentials: true
-  }));
+}));
 app.use(express.json());
 
 app.get('/health', async (req, res) => {
