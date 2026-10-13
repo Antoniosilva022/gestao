@@ -104,6 +104,10 @@ CREATE TABLE IF NOT EXISTS estoque (
   atualizado_em TIMESTAMP DEFAULT NOW()
 );
 
+ALTER TABLE estoque
+  ALTER COLUMN quantidade TYPE NUMERIC(10,3) USING quantidade::NUMERIC(10,3),
+  ALTER COLUMN quantidade_minima TYPE NUMERIC(10,3) USING quantidade_minima::NUMERIC(10,3);
+
 CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
   id SERIAL PRIMARY KEY,
   produto_id INTEGER REFERENCES produtos(id),
