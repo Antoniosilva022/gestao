@@ -1,7 +1,7 @@
 /**
  * Script para verificar se o usuário admin existe no banco do Render
  * Use assim:
- *   DATABASE_URL="postgresql://usuario:senha@host/banco" node check-admin-user.js
+ *   Configure DATABASE_URL safely in the environment, then run node check-admin-user.js
  * 
  * Não compartilhe a DATABASE_URL em público; use localmente ou em CI/CD seguro.
  */
@@ -11,7 +11,7 @@ const { Client } = require('pg');
 async function checkAdminUser() {
   if (!process.env.DATABASE_URL) {
     console.error('❌ Erro: DATABASE_URL não definida');
-    console.error('Use: DATABASE_URL="postgresql://..." node check-admin-user.js');
+    console.error('Configure DATABASE_URL safely in the environment before running this script');
     process.exit(1);
   }
 

@@ -1,11 +1,14 @@
 const { Pool } = require('pg');
 
-// Coloquei aqui a URL Externa do seu banco da Render que apareceu na sua imagem
-const connectionString = 'postgresql://banco_senhas:blYDPjmx2qOxw4UQdhcup9mC2NFM8fEv@dpg-daphfgvavr4c738lvc6g-a.ohio-postgres.render.com/banco_bijuteria';
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not defined in the environment');
+}
 
 const pool = new Pool({
-  connectionString: connectionString,
-  ssl: { rejectUnauthorized: false } // Obrigatório para conectar na Render
+  connectionString,
+  ssl: { rejectUnauthorized: false }
 });
 
 const sql = `
@@ -52,11 +55,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 async function rodar() {
   try {
-    console.log('Conectando ao banco da Render...');
+    console.log('Conectando ao banco configurado...');
     await pool.query(sql);
-    console.log('🚀 Tabelas da loja de bijuterias criadas com sucesso na Render!');
+    console.log('Tabelas da loja de bijuterias criadas com sucesso!');
   } catch (err) {
-    console.error('❌ Erro ao criar tabelas:', err.message);
+    console.error('Erro ao criar tabelas:', err.message);
+    process.exitCode = 1;
   } finally {
     await pool.end();
   }
