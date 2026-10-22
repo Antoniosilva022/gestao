@@ -61,10 +61,29 @@ async function buscar(req, res) {
   }
 }
 
+async function buscarPorCodigo(req, res) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.*, c.nome as categoria_nome, COALESCE(e.quantidade, 0) as estoque_atual,
+              COALESCE(e.quantidade_minima, 0) as quantidade_minima
+       FROM produtos p
+       LEFT JOIN categorias c ON c.id = p.categoria_id AND c.empresa_id = p.empresa_id
+       LEFT JOIN estoque e ON e.produto_id = p.id AND e.empresa_id = p.empresa_id
+       WHERE UPPER(BTRIM(p.codigo)) = UPPER(BTRIM($1)) AND p.empresa_id = $2`,
+      [req.params.codigo, req.empresaId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Produto não encontrado' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function criar(req, res) {
   const empresaId = req.empresaId;
   const { nome, descricao, preco, custo, unidade, categoria_id, codigo, estoque_atual, quantidade_minima, material, banho, tamanho, peso_gramas } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
+  const codigoNormalizado = normalizeTexto(codigo);
   const estoqueInicial = normalizeEstoqueValue(estoque_atual);
   const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
   const client = await pool.connect();
@@ -73,7 +92,7 @@ async function criar(req, res) {
     const { rows } = await client.query(
       `INSERT INTO produtos (empresa_id, nome, descricao, preco, custo, unidade, categoria_id, codigo, material, banho, tamanho, peso_gramas)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [empresaId, nome, descricao, preco, custo, unidade, categoriaId, codigo, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas)]
+      [empresaId, nome, descricao, preco, custo, unidade, categoriaId, codigoNormalizado, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas)]
     );
     await client.query(
       'INSERT INTO estoque (empresa_id, produto_id, quantidade, quantidade_minima) VALUES ($1, $2, $3, $4)',
@@ -93,6 +112,7 @@ async function atualizar(req, res) {
   const empresaId = req.empresaId;
   const { nome, descricao, preco, custo, unidade, categoria_id, codigo, ativo, estoque_atual, quantidade_minima, material, banho, tamanho, peso_gramas } = req.body;
   const categoriaId = normalizeCategoriaId(categoria_id);
+  const codigoNormalizado = normalizeTexto(codigo);
   const estoqueAtual = normalizeEstoqueValue(estoque_atual);
   const estoqueMinimo = normalizeEstoqueValue(quantidade_minima);
   const client = await pool.connect();
@@ -102,7 +122,7 @@ async function atualizar(req, res) {
       `UPDATE produtos SET nome=$1, descricao=$2, preco=$3, custo=$4, unidade=$5, categoria_id=$6, codigo=$7, ativo=$8,
               material=$9, banho=$10, tamanho=$11, peso_gramas=$12
        WHERE id=$13 AND empresa_id = $14 RETURNING *`,
-      [nome, descricao, preco, custo, unidade, categoriaId, codigo, ativo, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas), req.params.id, empresaId]
+      [nome, descricao, preco, custo, unidade, categoriaId, codigoNormalizado, ativo, normalizeTexto(material), normalizeTexto(banho), normalizeTexto(tamanho), normalizePeso(peso_gramas), req.params.id, empresaId]
     );
     if (!rows.length) {
       await client.query('ROLLBACK');
@@ -154,4 +174,4 @@ async function criarCategoria(req, res) {
   }
 }
 
-module.exports = { listar, buscar, criar, atualizar, excluir, listarCategorias, criarCategoria };
+module.exports = { listar, buscar, buscarPorCodigo, criar, atualizar, excluir, listarCategorias, criarCategoria };

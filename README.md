@@ -14,6 +14,8 @@ Sistema completo de gestão para loja de bijuterias e semijoias, com React + Nod
 
 Cada peça possui atributos próprios do segmento: material, banho/cor, tamanho/medida e peso em gramas.
 
+No cadastro de peças, use **Cadastrar com leitor** para bipar o código com um leitor USB ou Bluetooth configurado como teclado. O sistema busca o código na empresa: se o produto já existir, abre seus dados para edição; se ainda não estiver cadastrado, inicia um novo cadastro com o código preenchido. O cadastro manual continua disponível em **+ Nova Peça**.
+
 ## Como rodar
 
 ### 1. Banco de dados (com Docker)

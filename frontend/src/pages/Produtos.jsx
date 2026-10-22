@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -30,6 +30,10 @@ export default function Produtos() {
   const [categoriaForm, setCategoriaForm] = useState({ nome: '', descricao: '' });
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerLoading, setScannerLoading] = useState(false);
+  const [barcode, setBarcode] = useState('');
+  const barcodeInputRef = useRef(null);
   const [categoriaLoading, setCategoriaLoading] = useState(false);
   const [quickModal, setQuickModal] = useState(false);
   const [quickProduto, setQuickProduto] = useState(null);
@@ -80,7 +84,65 @@ export default function Produtos() {
     };
   }, [search, filtroAtivo]);
 
-  function openNovo() { setForm(EMPTY); setEditId(null); setModal(true); }
+  useEffect(() => {
+    if (scannerOpen) barcodeInputRef.current?.focus();
+  }, [scannerOpen]);
+
+  function openNovo() {
+    setForm(EMPTY);
+    setEditId(null);
+    setModal(true);
+  }
+
+  async function handleBarcodeScan(event) {
+    event.preventDefault();
+    const codigo = barcode.trim();
+    if (!codigo) {
+      toast.error('Leia um código de barras antes de continuar');
+      return;
+    }
+
+    setScannerLoading(true);
+    try {
+      const { data: produto } = await api.get(`/produtos/codigo/${encodeURIComponent(codigo)}`);
+      setForm({
+        ...produto,
+        estoque_atual: produto.estoque_atual ?? '',
+        quantidade_minima: produto.quantidade_minima ?? '',
+      });
+      setEditId(produto.id);
+      setModal(true);
+      setScannerOpen(false);
+      setBarcode('');
+      toast.success(`Produto identificado: ${produto.nome}`);
+    } catch (err) {
+      if (err.response?.status !== 404) {
+        toast.error(err.response?.data?.error || 'Não foi possível consultar o código');
+        return;
+      }
+
+      const produtoExistente = produtos.find(
+        (produto) => String(produto.codigo || '').trim().toUpperCase() === codigo.toUpperCase()
+      );
+      if (produtoExistente) {
+        openEditar(produtoExistente);
+        setScannerOpen(false);
+        setBarcode('');
+        toast.success(`Produto identificado: ${produtoExistente.nome}`);
+        return;
+      }
+
+      setForm({ ...EMPTY, codigo });
+      setEditId(null);
+      setModal(true);
+      setScannerOpen(false);
+      setBarcode('');
+      toast.success('Código não cadastrado. Complete os dados do novo produto.');
+    } finally {
+      setScannerLoading(false);
+    }
+  }
+
   function openEditar(p) {
     setForm({
       ...p,
@@ -194,8 +256,38 @@ export default function Produtos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Peças</h1>
-        <button onClick={openNovo} className="btn-primary">+ Nova Peça</button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={() => setScannerOpen((open) => !open)} className="btn-secondary">
+            {scannerOpen ? 'Cancelar leitura' : 'Cadastrar com leitor'}
+          </button>
+          <button type="button" onClick={openNovo} className="btn-primary">+ Nova Peça</button>
+        </div>
       </div>
+
+      {scannerOpen && (
+        <form onSubmit={handleBarcodeScan} className="card space-y-2">
+          <label htmlFor="barcode-reader" className="label">Código de barras</label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              ref={barcodeInputRef}
+              id="barcode-reader"
+              className="input"
+              value={barcode}
+              onChange={(event) => setBarcode(event.target.value)}
+              placeholder="Bipe o código de barras e pressione Enter"
+              maxLength={50}
+              autoComplete="off"
+              disabled={scannerLoading}
+            />
+            <button type="submit" disabled={scannerLoading} className="btn-primary shrink-0">
+              {scannerLoading ? 'Consultando...' : 'Usar código'}
+            </button>
+          </div>
+          <p className="text-sm text-gray-500">
+            O leitor deve funcionar como teclado. Depois da leitura, complete os demais dados do produto.
+          </p>
+        </form>
+      )}
 
       <div className="card">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -273,7 +365,7 @@ export default function Produtos() {
               </div>
               <div>
                 <label className="label">Código</label>
-                <input className="input" {...f('codigo')} />
+                <input className="input" maxLength={50} {...f('codigo')} />
               </div>
               <div>
                 <label className="label">Unidade</label>
